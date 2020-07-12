@@ -64,6 +64,11 @@ In this code fragment we plot two figures, one describing
     The program calls the methods above to perform the computations. 
 </ol>
 
-The second figure plots the coverage of a contig with respect to its predecessors and successors. 
+The second figure plots the coverage of a contig with respect to its predecessors and successors.
+
+For questions contact hsmurali@umd.edu
 
 
+```python
+
+```
