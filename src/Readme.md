@@ -8,7 +8,7 @@ Function: Compute_Global_Coordinates
 <ol> 
     <li>This function computes the global coordinate system for the scaffold(connected component) based on the length of the contigs in the connected component and the linking information as returned by MetaCarvel. We order the contigs based on the topological sort of the subgraph and assign coordinates in the global coorinate system in breadth first manner.</li>   
     <li>We also consider the contig orientations and the edge orientations in accurate estimation of coordinates. </li>
-    <li>If there multiple possible assignments we pick the one that has the largest coordinate value. We choose the greedy approaach because the number of solutions grows exponentially and the problem is NP-Hard! </li>
+    <li>If there multiple possible assignments we pick the one that has the largest coordinate value. We choose the greedy approach because the number of solutions grows exponentially and the problem is NP-Hard! </li>
     <li>Finally, we normalize all other positions based on the least cooridnate value so that the coorinate system starts with 0.</li>
     <li>The input to the program is the connected component subgraph of the assembly graph ``oriented.gml" which is a result of running MetaCarvel.</li>
 </ol>
