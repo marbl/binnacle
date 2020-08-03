@@ -1,7 +1,7 @@
 
 <h1>Binnacle-Estimating Scaffold Coverages</h1>
  
- This repository is under active development. In this document we describe the various functions implemented in Assign_Coords_BFS_Updated.py.
+ This repository is under active development. In this document we describe the various functions implemented in Compute_Scaffold_Coverages_Utility.py.
  
 <h2>Computing Global Coordinates</h2>
 Function: Compute_Global_Coordinates
