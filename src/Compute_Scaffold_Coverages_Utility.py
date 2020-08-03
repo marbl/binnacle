@@ -31,15 +31,21 @@ def Return_Starting_Point(subgraph):
     nodes = list(subgraph.nodes())
     min_node, min_indegree = '', np.inf
     for n in nodes:
-        if subgraph.in_degree(n) < min_indegree:
-        	min_node, min_indegree = n, subgraph.in_degree(n)
+        if subgraph.in_degree(n) < min_indegree and subgraph.out_degree(n) > 0:
+            min_node, min_indegree = n, subgraph.in_degree(n)
     return min_node, min_indegree
 
 def Random_Simplify(subgraph_, min_indegree_node):
-	subgraph = deepcopy(subgraph_)
-	pred_min = list(subgraph.predecessors(min_indegree_node))
-	subgraph.remove_edges_from(list(zip(pred_min, [min_indegree_node]*len(pred_min))))
-	return subgraph
+    subgraph = deepcopy(subgraph_)
+    cycles = nx.simple_cycles(subgraph)
+    edges_removal_set = []
+    for c in cycles:
+        edge = (c[-1], c[0])
+        edges_removal_set += [edge]
+    edges_removal_set = set(edges_removal_set)
+    print('Removing Edges---->',edges_removal_set)
+    subgraph.remove_edges_from(list(edges_removal_set))
+    return subgraph
 
 def Compute_Global_Coordinates(subgraph, v_0):
     v_0_orientation = subgraph.nodes[v_0]['orientation']
@@ -59,7 +65,8 @@ def Compute_Global_Coordinates(subgraph, v_0):
     while len(Q) > 0:
         src = Q.pop()
         visited[src] = True
-        neighbors = g_undir.neighbors(src)
+        neighbors = list(g_undir.neighbors(src))
+        print(src, 'Neighbors', list(neighbors))
         for n in neighbors:
             if subgraph.has_edge(src,n):
                 ###Estimate n's coordinates based on the conting ordering src,n
@@ -67,6 +74,7 @@ def Compute_Global_Coordinates(subgraph, v_0):
                 edge_orientation = subgraph.edges[edge]['orientation']
                 edge_overlap = int(float(g_undir.edges[edge]['mean']))
                 c2_length = int(g_undir.nodes[n]['length'])
+                print(edge, edge_orientation, edge_overlap, c2_length)
                 s1, e1 = global_coords[src]
                 if edge_orientation == 'EE':
                     e2 = e1 + edge_overlap
@@ -87,6 +95,7 @@ def Compute_Global_Coordinates(subgraph, v_0):
                 edge_orientation = subgraph.edges[edge]['orientation']
                 edge_overlap = int(float(g_undir.edges[edge]['mean']))
                 c1_length = int(g_undir.nodes[n]['length'])
+                print(edge, edge_orientation, edge_overlap, c1_length)
                 s2, e2 = global_coords[src]
                 if edge_orientation == 'EE':
                     e1 = e2 - edge_overlap
@@ -101,6 +110,7 @@ def Compute_Global_Coordinates(subgraph, v_0):
                     s1 = e2 - edge_overlap
                     e1 = s1 - c1_length
                 start,end = (s1,e1)
+            print(n,start,end)
             try:
                 if global_coords[n][0] < start:
                     global_coords[n] = (start,end)
@@ -119,6 +129,7 @@ def Compute_Global_Coordinates(subgraph, v_0):
     for g in global_coords:
         s,e = global_coords[g]
         global_coords[g] = s-min_coord, e-min_coord
+    print(global_coords)
     return global_coords
 
 
@@ -168,6 +179,7 @@ def Load_Read_Coverage_and_Assembly_Graph(graphpath, covpath):
 def Compute_Coverage(connected_component, df_coverage, start):
     top_sort = list(connected_component.nodes())
     coords = Compute_Global_Coordinates(connected_component, start)
+    print(coords.keys())
     max_coord = -np.inf
     for c in top_sort:
         max_v = max(coords[c])
@@ -368,15 +380,21 @@ def Write_Coverage_Outputs(graph,df_coverage):
     for j in range(len(weakly_connected_components)):
         test = weakly_connected_components[j]
         nodes = list(test.nodes())
-        #print(nodes)
+        
         if len(nodes) > 1:
             min_node, min_indegree = Return_Starting_Point(test)
             if min_indegree > 0: 
-            	test = Random_Simplify(test, min_node)
+                print('Requires graph simplification')
+                test = Random_Simplify(test, min_node)
         else: 
         	min_node = nodes[0]
 
+
+        print('Debug---->',test.nodes())
+        print('Debug---->',min_node)
         cc_before_delinking += 1
+        print('Debug---->',cc_before_delinking)
+
         df_coverage_cc = df_coverage.loc[nodes]
         coverage, df_depths = Compute_Coverage(test, df_coverage_cc, min_node)
         coords = dict(zip(df_depths.index.tolist(), df_depths['Coords'].tolist()))
@@ -405,7 +423,7 @@ def Write_Coverage_Outputs(graph,df_coverage):
                 list_coords_before_delinking.append(d)
         
             delinked_conn_comps = list(nx.weakly_connected_component_subgraphs(g_removed))
-            print(cc_before_delinking, len(nodes), len(delinked_conn_comps))
+            print(cc_before_delinking, len(nodes), len(delinked_conn_comps), '\n')
 
             if len(delinked_conn_comps) == 1:
                 cc_after_delinking += 1
