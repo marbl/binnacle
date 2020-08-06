@@ -43,7 +43,6 @@ def Random_Simplify(subgraph_, min_indegree_node):
         edge = (c[-1], c[0])
         edges_removal_set += [edge]
     edges_removal_set = set(edges_removal_set)
-    print('Removing Edges---->',edges_removal_set)
     subgraph.remove_edges_from(list(edges_removal_set))
     return subgraph
 
@@ -66,7 +65,6 @@ def Compute_Global_Coordinates(subgraph, v_0):
         src = Q.pop()
         visited[src] = True
         neighbors = list(g_undir.neighbors(src))
-        print(src, 'Neighbors', list(neighbors))
         for n in neighbors:
             if subgraph.has_edge(src,n):
                 ###Estimate n's coordinates based on the conting ordering src,n
@@ -74,7 +72,6 @@ def Compute_Global_Coordinates(subgraph, v_0):
                 edge_orientation = subgraph.edges[edge]['orientation']
                 edge_overlap = int(float(g_undir.edges[edge]['mean']))
                 c2_length = int(g_undir.nodes[n]['length'])
-                print(edge, edge_orientation, edge_overlap, c2_length)
                 s1, e1 = global_coords[src]
                 if edge_orientation == 'EE':
                     e2 = e1 + edge_overlap
@@ -95,7 +92,6 @@ def Compute_Global_Coordinates(subgraph, v_0):
                 edge_orientation = subgraph.edges[edge]['orientation']
                 edge_overlap = int(float(g_undir.edges[edge]['mean']))
                 c1_length = int(g_undir.nodes[n]['length'])
-                print(edge, edge_orientation, edge_overlap, c1_length)
                 s2, e2 = global_coords[src]
                 if edge_orientation == 'EE':
                     e1 = e2 - edge_overlap
@@ -110,7 +106,6 @@ def Compute_Global_Coordinates(subgraph, v_0):
                     s1 = e2 - edge_overlap
                     e1 = s1 - c1_length
                 start,end = (s1,e1)
-            print(n,start,end)
             try:
                 if global_coords[n][0] < start:
                     global_coords[n] = (start,end)
@@ -129,7 +124,6 @@ def Compute_Global_Coordinates(subgraph, v_0):
     for g in global_coords:
         s,e = global_coords[g]
         global_coords[g] = s-min_coord, e-min_coord
-    print(global_coords)
     return global_coords
 
 
@@ -146,9 +140,9 @@ def Load_Read_Coverage_and_Assembly_Graph(graphpath, covpath):
     G = nx.read_gml(graphpath)
     nodes = list(G.nodes())
     df_coverage = pd.DataFrame()
-    it = 0
+    
     df_coverage_chunks = pd.read_csv(covpath,names = ['Contig','Loc','coverage'], 
-                              sep = '\t', low_memory = True, memory_map = True, 
+                              sep = '\t', low_memory = False, memory_map = True, 
                               dtype = {'Contig': str, 'Loc': 'int32', 'coverage': 'int32'},
                               engine='c', chunksize = 5000000, index_col = ['Contig'])
     for chunk in df_coverage_chunks:
@@ -179,7 +173,6 @@ def Load_Read_Coverage_and_Assembly_Graph(graphpath, covpath):
 def Compute_Coverage(connected_component, df_coverage, start):
     top_sort = list(connected_component.nodes())
     coords = Compute_Global_Coordinates(connected_component, start)
-    print(coords.keys())
     max_coord = -np.inf
     for c in top_sort:
         max_v = max(coords[c])
@@ -368,15 +361,22 @@ def Return_Contig_Scaffold_Positions(coordinate_dictionary):
             except KeyError: pos_dict[i] = [c]
     return pos_dict
 
-
-def Write_Coverage_Outputs(graph,df_coverage):
+def Write_Coverage_Outputs(graph,df_coverage, oppath, sample_id):
     weakly_connected_components = list(nx.weakly_connected_component_subgraphs(graph))
     print(len(weakly_connected_components))
     t = len(weakly_connected_components)
+    
     list_coverages_before_delinking, list_coords_before_delinking = [], []
     list_coverages_after_delinking, list_coords_after_delinking = [], []
+    list_coverage_summary_before_delinking, list_coverage_summary_after_delinking = [],[]
     cc_before_delinking,cc_after_delinking = 0,0
-    
+    batch_size = 500000
+
+    cov_before_delinking_path = oppath + 'Coverages_Before_Delinking/' + sample_id + '_Coverages.txt'
+    cov_after_delinking_path = oppath + 'Coverages_After_Delinking/' + sample_id + '_Coverages.txt'
+    fbuf_before_delinking = open(cov_before_delinking_path, 'a')
+    fbuf_after_delinking = open(cov_after_delinking_path, 'a')
+
     for j in range(len(weakly_connected_components)):
         test = weakly_connected_components[j]
         nodes = list(test.nodes())
@@ -386,15 +386,11 @@ def Write_Coverage_Outputs(graph,df_coverage):
             if min_indegree > 0: 
                 print('Requires graph simplification')
                 test = Random_Simplify(test, min_node)
+                min_node, min_indegree = Return_Starting_Point(test)
         else: 
-        	min_node = nodes[0]
+            min_node = nodes[0]
 
-
-        print('Debug---->',test.nodes())
-        print('Debug---->',min_node)
         cc_before_delinking += 1
-        print('Debug---->',cc_before_delinking)
-
         df_coverage_cc = df_coverage.loc[nodes]
         coverage, df_depths = Compute_Coverage(test, df_coverage_cc, min_node)
         coords = dict(zip(df_depths.index.tolist(), df_depths['Coords'].tolist()))
@@ -412,70 +408,100 @@ def Write_Coverage_Outputs(graph,df_coverage):
             Pos_Dict = Return_Contig_Scaffold_Positions(coords)
             df_depths = df_depths.loc[top_sort]
             g_removed = Get_Outlier_Contigs(outliers, Pos_Dict, coords, test, 100)
-        
+            mu, dev = round(np.mean(coverage),1), round(np.mean(coverage),1)
+            d_before_dlink = str(cc_before_delinking) + '\t' + str(mu) + '\t' + str(dev) + '\n'
+            list_coverage_summary_before_delinking.append(d_before_dlink)
+
             for i in range(len(coverage)):
-                d = {'Connected_Component_Before_Delinking':cc_before_delinking, 
-                     'Coordinates':i, 'Coverage':coverage[i]}
+                d = str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\n'
                 list_coverages_before_delinking.append(d) 
             for c in coords:
-                d = {'Connected_Component_Before_Delinking':cc_before_delinking, 'Contig':c, 
-                     'Start':coords[c][0],'End':coords[c][1]}
+                d = str(cc_before_delinking)+'\t'+c+'\t'+ str(coords[c][0]) + '\t' +  str(coords[c][1]) + '\n'
                 list_coords_before_delinking.append(d)
-        
+
             delinked_conn_comps = list(nx.weakly_connected_component_subgraphs(g_removed))
-            print(cc_before_delinking, len(nodes), len(delinked_conn_comps), '\n')
+            print('Debug---->', cc_before_delinking, len(nodes), len(delinked_conn_comps))
 
             if len(delinked_conn_comps) == 1:
                 cc_after_delinking += 1
-                flag = True
-                
+                flag = True  
             else:
                 for cc in delinked_conn_comps:
                     cc_after_delinking += 1
-                    nodes = list(cc.nodes())
+                    nodes_cc = list(cc.nodes())
 
-                    if len(nodes) > 1:
+                    if len(nodes_cc) > 1:
                         min_node, min_indegree = Return_Starting_Point(cc)
-                        if min_indegree > 0: cc = Random_Simplify(cc, min_node)
-                    else: min_node = nodes[0]
+                        if min_indegree > 0: 
+                            cc = Random_Simplify(cc, min_node)
+                            min_node, min_indegree = Return_Starting_Point(cc)
+                    else: min_node = nodes_cc[0]
 
                     coverage_cc, df_depths_cc = Compute_Coverage(cc, df_coverage_cc, min_node)
+                    mu, dev = round(np.mean(coverage_cc),1), round(np.mean(coverage_cc),1)
+                    d_after_dlink = str(cc_after_delinking)+'\t'+str(mu)+'\t'+str(dev)+'\n'
+                    list_coverage_summary_after_delinking.append(d_after_dlink)
+
                     coords_cc = dict(zip(df_depths_cc.index.tolist(), df_depths_cc['Coords'].tolist()))
                     for i in range(len(coverage_cc)):
-                        d = {'Connected_Component_After_Delinking':cc_after_delinking, 
-                             'Connected_Component_Before_Delinking':cc_before_delinking,
-                             'Coordinates':i, 'Coverage':coverage_cc[i]}
+                        d = str(cc_after_delinking)+'\t'+str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage_cc[i])+'\n'
                         list_coverages_after_delinking.append(d)       
                     for c in coords_cc:
-                        d = {'Connected_Component_After_Delinking':cc_after_delinking,
-                             'Connected_Component_Before_Delinking':cc_before_delinking,
-                             'Contig':c, 'Start':coords_cc[c][0],'End':coords_cc[c][1]}
+                        d = str(cc_after_delinking)+'\t'+str(cc_before_delinking)+'\t'+c+'\t'+str(coords_cc[c][0])+'\t'+str(coords_cc[c][1])+'\n'
                         list_coords_after_delinking.append(d)
         if (flag):
+            mu, dev = round(np.mean(coverage),1), round(np.mean(coverage),1)
+            d_before_dlink = str(cc_before_delinking) + '\t'+  str(mu) +'\t'+ str(dev) + '\n'
+            d_after_dlink = str(cc_after_delinking) + '\t'+  str(mu) +'\t'+ str(dev) + '\n'
+            list_coverage_summary_before_delinking.append(d_before_dlink)
+            list_coverage_summary_after_delinking.append(d_after_dlink)
+            
             for i in range(len(coverage)):
-                d = {'Connected_Component_Before_Delinking':cc_before_delinking,
-                     'Coordinates':i, 'Coverage':coverage[i]}
+                d = str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\n'
                 list_coverages_before_delinking.append(d)
-                d = {'Connected_Component_After_Delinking':cc_after_delinking, 
-                     'Connected_Component_Before_Delinking':cc_before_delinking,
-                     'Coordinates':i, 'Coverage':coverage[i]}
+                d = str(cc_after_delinking)+'\t'+str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\n'
                 list_coverages_after_delinking.append(d)
                     
             for c in coords:
-                d = {'Connected_Component_Before_Delinking':cc_before_delinking, 'Contig':c, 
-                     'Start':coords[c][0],'End':coords[c][1]}
+                d =  str(cc_before_delinking) + '\t'+ c+'\t' + str(coords[c][0]) + '\t' + str(coords[c][1]) + '\n'
                 list_coords_before_delinking.append(d)
-                d = {'Connected_Component_After_Delinking':cc_after_delinking,
-                     'Connected_Component_Before_Delinking':cc_before_delinking,
-                     'Contig':c, 'Start':coords[c][0],'End':coords[c][1]}
+                d = str(cc_after_delinking) + '\t' + str(cc_before_delinking) + '\t' +c+'\t'+str(coords[c][0]) + '\t' + str(coords[c][1]) + '\n'
                 list_coords_after_delinking.append(d)
-    del df_coverage
 
-    df_coords_before_delinking = pd.DataFrame(list_coords_before_delinking)
-    df_coords_after_delinking = pd.DataFrame(list_coords_after_delinking)
-    df_coverages_scaffolds_before_delinking = pd.DataFrame(list_coverages_before_delinking)
-    df_coverages_scaffolds_after_delinking = pd.DataFrame(list_coverages_after_delinking)
+        if len(list_coverages_before_delinking) > batch_size:
+            print('Flushing-List of Coverages Before Delinking')
+            fbuf_before_delinking.writelines(list_coverages_before_delinking)
+            list_coverages_before_delinking = []
+        if len(list_coverages_after_delinking) > batch_size:
+            print('Flushing-List of Coverages After Delinking')
+            fbuf_after_delinking.writelines(list_coverages_after_delinking)
+            list_coverages_after_delinking = []
+
+    del df_coverage
+    fbuf_before_delinking.writelines(list_coverages_before_delinking)
+    fbuf_after_delinking.writelines(list_coverages_after_delinking)
+    fbuf_before_delinking.close()
+    fbuf_after_delinking.close()
+
+    coords_before_delinking_path = oppath + 'Coverages_Before_Delinking/' + sample_id + '_Coords.txt'
+    fbuf_before_delinking = open(coords_before_delinking_path, 'w')
+    fbuf_before_delinking.writelines(list_coords_before_delinking)
+    fbuf_before_delinking.close()
+    
+    coords_after_delinking_path = oppath + 'Coverages_After_Delinking/' + sample_id + '_Coords.txt'
+    fbuf_after_delinking = open(coords_after_delinking_path, 'w')
+    fbuf_after_delinking.writelines(list_coords_after_delinking)
+    fbuf_after_delinking.close()
+    
+    summary_before_delinking_path = oppath + 'Coverages_Before_Delinking/' + sample_id + '_Summary.txt'
+    fbuf_before_delinking = open(summary_before_delinking_path, 'w')
+    fbuf_before_delinking.writelines(list_coverage_summary_before_delinking)
+    fbuf_before_delinking.close()
+    
+    summary_after_delinking_path = oppath + 'Coverages_After_Delinking/' + sample_id + '_Summary.txt'
+    fbuf_after_delinking = open(summary_after_delinking_path, 'w')
+    fbuf_after_delinking.writelines(list_coverage_summary_after_delinking)
+    fbuf_after_delinking.close()
+    
     
     print('Done.....')
-    return (df_coords_before_delinking, df_coords_after_delinking, 
-            df_coverages_scaffolds_before_delinking, df_coverages_scaffolds_after_delinking)
