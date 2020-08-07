@@ -10,5 +10,10 @@
 #SBATCH --array=2-20
 
 source activate hsmurali27
-file=`head -n ${SLURM_ARRAY_TASK_ID} samples.txt | tail -n 1`
-python Calculate_Coverages.py ${file}
+sample=`head -n ${SLURM_ARRAY_TASK_ID} samples.txt | tail -n 1`
+echo ${sample}
+graphpath=/fs/cbcb-lab/mpop/MetaCarvel_paper/hmp_scaffolds/stool/${sample}/${sample}_scaffolds/oriented.gml
+coverage_path=/fs/cbcb-lab/mpop/projects/refining_bins_with_assembly_graphs/genomecov_d/${sample}.txt
+output_path=/fs/cbcb-scratch/hsmurali/Binnacle_Scaffold_Coverages/${sample}/
+contigs_path=/fs/cbcb-lab/mpop/MetaCarvel_paper/hmp_scaffolds/stool/${sample}/${sample}.fna
+time python Calculate_Coverages.py ${graphpath} ${coverage_path} ${output_path} ${contigs_path}

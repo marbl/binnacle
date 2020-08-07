@@ -4,24 +4,23 @@
 # In[1]:
 
 
-from Compute_Scaffold_Coverages_Utility import *
-from os.path import isdir
-from os import listdir, mkdir
 import sys
+from Binnacle_IO_Utility import *
+
 
 # In[2]:
 
-graphspath = '/Users/harihara/Mount/MetaCarvel_paper/hmp_scaffolds/stool/'
-covpath = '/Users/harihara/Research-Activities/Data/Binnacle-Op/genomecov_d/'
-op_path_before_delinking = '/Users/harihara/Research-Activities/Data/Binnacle-Op/Coverages_Before_Delinking/'
-op_path_after_delinking = '/Users/harihara/Research-Activities/Data/Binnacle-Op/Coverages_After_Delinking/'
+graph_path = sys.argv[1]
+coverage_path  =  sys.argv[2]
+output_dir = sys.argv[3]
+Contigs_Path = sys.argv[4]
 
-if not isdir(op_path_after_delinking): mkdir(op_path_after_delinking)
-if not isdir(op_path_before_delinking): mkdir(op_path_before_delinking)
 
-sample = 'SRS104311'
-Graph_path= graphspath+sample+'/'+sample+'_scaffolds/oriented.gml'
-df_coverage, G =Load_Read_Coverage_and_Assembly_Graph(Graph_path, covpath+sample+'.txt') 
-
+if not isdir(output_dir): mkdir(output_dir)
+df_coverage, G =Load_Read_Coverage_and_Assembly_Graph(graph_path, coverage_path) 
 print('Loaded Coverage and Assembly Graph')
-Write_Coverage_Outputs(G, df_coverage, '/Users/harihara/Research-Activities/Data/Binnacle-Op/', sample)
+Write_Coverage_Outputs(G, df_coverage, output_dir)
+Coords_Path = output_dir+'Coords_After_Delinking.txt'
+op_path = output_dir+'Scaffolds.fasta'
+Write_Scaffolds(Contigs_Path, Coords_Path, op_path)
+print('Written Fasta Files')

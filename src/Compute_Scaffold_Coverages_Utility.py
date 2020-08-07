@@ -7,14 +7,12 @@
 import numpy as np
 import pandas as pd
 import networkx as nx
-from os import listdir
+from os import mkdir
+from os.path import isdir
 from copy import deepcopy
 from random import choice
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-from matplotlib.backends.backend_pdf import PdfPages
-
-rcParams = {'font.size': 17 , 'font.weight': 'normal', 'font.family': 'sans-serif', 'axes.unicode_minus':False, 'axes.labelweight':'normal'}
 
 # <h2>Computing Global Coordinates</h2>
 # <ol> 
@@ -125,38 +123,6 @@ def Compute_Global_Coordinates(subgraph, v_0):
         s,e = global_coords[g]
         global_coords[g] = s-min_coord, e-min_coord
     return global_coords
-
-
-# <h2> Computing Coverages </h2>
-#     
-# To compute the read coverages we use the *genomecov* program, part of the *bedtools* suite. 
-# We run *genomecov* with *-d* optional enabled so that we get the per base depth. 
-# The output of the prgram is utilized to compute the depth along the scaffold and this function loads the out of genomecov as a dataframe.   
-
-# In[3]:
-
-
-def Load_Read_Coverage_and_Assembly_Graph(graphpath, covpath):
-    G = nx.read_gml(graphpath)
-    nodes = list(G.nodes())
-    df_coverage = pd.DataFrame()
-    
-    df_coverage_chunks = pd.read_csv(covpath,names = ['Contig','Loc','coverage'], 
-                              sep = '\t', low_memory = False, memory_map = True, 
-                              dtype = {'Contig': str, 'Loc': 'int32', 'coverage': 'int32'},
-                              engine='c', chunksize = 5000000, index_col = ['Contig'])
-    for chunk in df_coverage_chunks:
-        chunk.index = chunk.index.astype('str')
-        nodes_pres = list(set(chunk.index.tolist()).intersection(set(nodes)))
-        temp = chunk.loc[nodes_pres]
-        temp = temp.reset_index()
-        df_coverage = pd.concat([df_coverage, temp])
-
-    df_coverage['Loc'] = df_coverage['Loc']-1
-    df_coverage = df_coverage.sort_values(by = ['Contig', 'Loc'])
-    df_coverage = df_coverage.set_index('Contig')
-    print(df_coverage.info())
-    return df_coverage, G
 
 
 
@@ -360,148 +326,3 @@ def Return_Contig_Scaffold_Positions(coordinate_dictionary):
             try: pos_dict[i].append(c)
             except KeyError: pos_dict[i] = [c]
     return pos_dict
-
-def Write_Coverage_Outputs(graph,df_coverage, oppath, sample_id):
-    weakly_connected_components = list(nx.weakly_connected_component_subgraphs(graph))
-    print(len(weakly_connected_components))
-    t = len(weakly_connected_components)
-    
-    list_coverages_before_delinking, list_coords_before_delinking = [], []
-    list_coverages_after_delinking, list_coords_after_delinking = [], []
-    list_coverage_summary_before_delinking, list_coverage_summary_after_delinking = [],[]
-    cc_before_delinking,cc_after_delinking = 0,0
-    batch_size = 500000
-
-    cov_before_delinking_path = oppath + 'Coverages_Before_Delinking/' + sample_id + '_Coverages.txt'
-    cov_after_delinking_path = oppath + 'Coverages_After_Delinking/' + sample_id + '_Coverages.txt'
-    fbuf_before_delinking = open(cov_before_delinking_path, 'a')
-    fbuf_after_delinking = open(cov_after_delinking_path, 'a')
-
-    for j in range(len(weakly_connected_components)):
-        test = weakly_connected_components[j]
-        nodes = list(test.nodes())
-        
-        if len(nodes) > 1:
-            min_node, min_indegree = Return_Starting_Point(test)
-            if min_indegree > 0: 
-                print('Requires graph simplification')
-                test = Random_Simplify(test, min_node)
-                min_node, min_indegree = Return_Starting_Point(test)
-        else: 
-            min_node = nodes[0]
-
-        cc_before_delinking += 1
-        df_coverage_cc = df_coverage.loc[nodes]
-        coverage, df_depths = Compute_Coverage(test, df_coverage_cc, min_node)
-        coords = dict(zip(df_depths.index.tolist(), df_depths['Coords'].tolist()))
-        flag = False
-
-        if len(nodes) == 1:
-            cc_after_delinking += 1
-            flag =  True
-
-        if len(nodes) > 1:
-            mean_ratios = Helper_Changepoints(deepcopy(coverage))
-            outliers = ID_Peaks(mean_ratios)
-            outliers = Filter_Neighbors(outliers, mean_ratios)
-            top_sort = df_depths.index.tolist()
-            Pos_Dict = Return_Contig_Scaffold_Positions(coords)
-            df_depths = df_depths.loc[top_sort]
-            g_removed = Get_Outlier_Contigs(outliers, Pos_Dict, coords, test, 100)
-            mu, dev = round(np.mean(coverage),1), round(np.mean(coverage),1)
-            d_before_dlink = str(cc_before_delinking) + '\t' + str(mu) + '\t' + str(dev) + '\n'
-            list_coverage_summary_before_delinking.append(d_before_dlink)
-
-            for i in range(len(coverage)):
-                d = str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\n'
-                list_coverages_before_delinking.append(d) 
-            for c in coords:
-                d = str(cc_before_delinking)+'\t'+c+'\t'+ str(coords[c][0]) + '\t' +  str(coords[c][1]) + '\n'
-                list_coords_before_delinking.append(d)
-
-            delinked_conn_comps = list(nx.weakly_connected_component_subgraphs(g_removed))
-            print('Debug---->', cc_before_delinking, len(nodes), len(delinked_conn_comps))
-
-            if len(delinked_conn_comps) == 1:
-                cc_after_delinking += 1
-                flag = True  
-            else:
-                for cc in delinked_conn_comps:
-                    cc_after_delinking += 1
-                    nodes_cc = list(cc.nodes())
-
-                    if len(nodes_cc) > 1:
-                        min_node, min_indegree = Return_Starting_Point(cc)
-                        if min_indegree > 0: 
-                            cc = Random_Simplify(cc, min_node)
-                            min_node, min_indegree = Return_Starting_Point(cc)
-                    else: min_node = nodes_cc[0]
-
-                    coverage_cc, df_depths_cc = Compute_Coverage(cc, df_coverage_cc, min_node)
-                    mu, dev = round(np.mean(coverage_cc),1), round(np.mean(coverage_cc),1)
-                    d_after_dlink = str(cc_after_delinking)+'\t'+str(mu)+'\t'+str(dev)+'\n'
-                    list_coverage_summary_after_delinking.append(d_after_dlink)
-
-                    coords_cc = dict(zip(df_depths_cc.index.tolist(), df_depths_cc['Coords'].tolist()))
-                    for i in range(len(coverage_cc)):
-                        d = str(cc_after_delinking)+'\t'+str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage_cc[i])+'\n'
-                        list_coverages_after_delinking.append(d)       
-                    for c in coords_cc:
-                        d = str(cc_after_delinking)+'\t'+str(cc_before_delinking)+'\t'+c+'\t'+str(coords_cc[c][0])+'\t'+str(coords_cc[c][1])+'\n'
-                        list_coords_after_delinking.append(d)
-        if (flag):
-            mu, dev = round(np.mean(coverage),1), round(np.mean(coverage),1)
-            d_before_dlink = str(cc_before_delinking) + '\t'+  str(mu) +'\t'+ str(dev) + '\n'
-            d_after_dlink = str(cc_after_delinking) + '\t'+  str(mu) +'\t'+ str(dev) + '\n'
-            list_coverage_summary_before_delinking.append(d_before_dlink)
-            list_coverage_summary_after_delinking.append(d_after_dlink)
-            
-            for i in range(len(coverage)):
-                d = str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\n'
-                list_coverages_before_delinking.append(d)
-                d = str(cc_after_delinking)+'\t'+str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\n'
-                list_coverages_after_delinking.append(d)
-                    
-            for c in coords:
-                d =  str(cc_before_delinking) + '\t'+ c+'\t' + str(coords[c][0]) + '\t' + str(coords[c][1]) + '\n'
-                list_coords_before_delinking.append(d)
-                d = str(cc_after_delinking) + '\t' + str(cc_before_delinking) + '\t' +c+'\t'+str(coords[c][0]) + '\t' + str(coords[c][1]) + '\n'
-                list_coords_after_delinking.append(d)
-
-        if len(list_coverages_before_delinking) > batch_size:
-            print('Flushing-List of Coverages Before Delinking')
-            fbuf_before_delinking.writelines(list_coverages_before_delinking)
-            list_coverages_before_delinking = []
-        if len(list_coverages_after_delinking) > batch_size:
-            print('Flushing-List of Coverages After Delinking')
-            fbuf_after_delinking.writelines(list_coverages_after_delinking)
-            list_coverages_after_delinking = []
-
-    del df_coverage
-    fbuf_before_delinking.writelines(list_coverages_before_delinking)
-    fbuf_after_delinking.writelines(list_coverages_after_delinking)
-    fbuf_before_delinking.close()
-    fbuf_after_delinking.close()
-
-    coords_before_delinking_path = oppath + 'Coverages_Before_Delinking/' + sample_id + '_Coords.txt'
-    fbuf_before_delinking = open(coords_before_delinking_path, 'w')
-    fbuf_before_delinking.writelines(list_coords_before_delinking)
-    fbuf_before_delinking.close()
-    
-    coords_after_delinking_path = oppath + 'Coverages_After_Delinking/' + sample_id + '_Coords.txt'
-    fbuf_after_delinking = open(coords_after_delinking_path, 'w')
-    fbuf_after_delinking.writelines(list_coords_after_delinking)
-    fbuf_after_delinking.close()
-    
-    summary_before_delinking_path = oppath + 'Coverages_Before_Delinking/' + sample_id + '_Summary.txt'
-    fbuf_before_delinking = open(summary_before_delinking_path, 'w')
-    fbuf_before_delinking.writelines(list_coverage_summary_before_delinking)
-    fbuf_before_delinking.close()
-    
-    summary_after_delinking_path = oppath + 'Coverages_After_Delinking/' + sample_id + '_Summary.txt'
-    fbuf_after_delinking = open(summary_after_delinking_path, 'w')
-    fbuf_after_delinking.writelines(list_coverage_summary_after_delinking)
-    fbuf_after_delinking.close()
-    
-    
-    print('Done.....')
