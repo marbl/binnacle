@@ -144,18 +144,13 @@ def Compute_Coverage(connected_component, df_coverage, start):
         max_v = max(coords[c])
         if max_v >= max_coord: max_coord = max_v
     coverage = np.zeros(max_coord+1)
-    d_arr = []
     for c in top_sort:
         contig_depth = np.array(df_coverage.loc[c]['coverage'])
-        d = {'Contig':c, 'Average_Depth':np.median(contig_depth),'Coords':coords[c]}
-        d_arr.append(d)
         s,e = coords[c]
-        if (s > e): coverage[s:e:-1] += contig_depth[::-1]
+        if (s > e): coverage[s:e:-1] += contig_depth
         else: coverage[s:e] += contig_depth
-    df_depths = pd.DataFrame(d_arr)
-    df_depths = df_depths.set_index('Contig')
-    df_depths = df_depths.loc[top_sort]
-    return coverage, df_depths
+        assert np.abs(s-e) == len(contig_depth), top_sort
+    return coverage, coords
 
 
 # <h2> Change Point Detection on the Scaffold Coverage </h2>

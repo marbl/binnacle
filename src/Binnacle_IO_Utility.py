@@ -3,7 +3,6 @@ from Bio import SeqIO
 from os.path import isfile
 from Compute_Scaffold_Coverages_Utility import *
 
-
 # <h2> Computing Coverages </h2>
 #     
 # To compute the read coverages we use the *genomecov* program, part of the *bedtools* suite. 
@@ -74,8 +73,8 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
 
         cc_before_delinking += 1
         df_coverage_cc = df_coverage.loc[nodes]
-        coverage, df_depths = Compute_Coverage(test, df_coverage_cc, min_node)
-        coords = dict(zip(df_depths.index.tolist(), df_depths['Coords'].tolist()))
+        coverage, coords = Compute_Coverage(test, df_coverage_cc, min_node)
+        
         for i in range(len(coverage)):
             d = bytes(str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\n', encoding = 'utf-8')
             wb_cov_before_delinking.write(d)  
@@ -93,9 +92,7 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
             mean_ratios = Helper_Changepoints(deepcopy(coverage))
             outliers = ID_Peaks(mean_ratios)
             outliers = Filter_Neighbors(outliers, mean_ratios)
-            top_sort = df_depths.index.tolist()
             Pos_Dict = Return_Contig_Scaffold_Positions(coords)
-            df_depths = df_depths.loc[top_sort]
             g_removed = Get_Outlier_Contigs(outliers, Pos_Dict, coords, test, 100)
             
             mu, dev = round(np.mean(coverage),1), round(np.mean(coverage),1)
@@ -119,13 +116,11 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
                             cc = Random_Simplify(cc, min_node)
                             min_node, min_indegree = Return_Starting_Point(cc)
                     else: min_node = nodes_cc[0]
-                    coverage_cc, df_depths_cc = Compute_Coverage(cc, df_coverage_cc, min_node)
+                    coverage_cc, coords_cc = Compute_Coverage(cc, df_coverage_cc, min_node)
                     mu, dev = round(np.mean(coverage_cc),1), round(np.mean(coverage_cc),1)
                     d_after_dlink = bytes(str(cc_after_delinking)+'\t'+str(mu)+'\t'+str(dev)+'\n', encoding = 'utf-8')
                     wb_summary_after_delinking.write(d_after_dlink)
                     
-
-                    coords_cc = dict(zip(df_depths_cc.index.tolist(), df_depths_cc['Coords'].tolist()))
                     for i in range(len(coverage_cc)):
                         d = bytes(str(cc_after_delinking)+'\t'+str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage_cc[i])+'\n', encoding = 'utf-8')
                         wb_cov_after_delinking.write(d)      
