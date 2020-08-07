@@ -11,11 +11,11 @@ For 20 complex stool samples from the human microbiome project, we ran MetaBat w
 ## Requirements:
 
 <ol>
-  <li> Python 3(3.7.3) <\li>
-  <li> Numpy (>=1.15.4) <\li>
-  <li> Pandas (>=0.23.4) <\li>
-  <li> Networkx (>=2.2) <\li>
-  <li> matplotlib (>=2.2.3) <\li>
-  <li> Bio-python (>=1.73) <\li>
+  <li> Python 3(3.7.3) 
+  <li> Numpy (>=1.15.4) 
+  <li> Pandas (>=0.23.4) 
+  <li> Networkx (>=2.2) 
+  <li> matplotlib (>=2.2.3) 
+  <li> Bio-python (>=1.73) </li>
 <\ol>  
   
