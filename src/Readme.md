@@ -108,7 +108,7 @@ In the following section we describe the code fragments available in **Binnacle_
 
 **Function**: Load_Read_Coverage_and_Assembly_Graph<br/>
 **Input**: Path to the Assembly Graph, Path to the output og running genomecov<br/>
-**Output**: Return a networkx graph object and dataframe containing the output of genomecov
+**Output**: Return a networkx graph object and dataframe containing the output of genomecov <br/>
 
 To compute the read coverages we use the *genomecov* program, part of the *bedtools* suite. We run *genomecov* with *-d* optional enabled so that we get the per base depth. The output of the prgram is utilized to compute the depth along the scaffold and this function loads the out of genomecov as a dataframe.   
 
