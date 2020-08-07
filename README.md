@@ -7,3 +7,34 @@ For 20 complex stool samples from the human microbiome project, we ran MetaBat w
 
 <img src="img/cumulative_len.png" width=400 /> <img src="img/contamination2completeness.png" width=300 />
 
+
+## Software Requirements:
+
+<ol>
+  <li> Python 3(3.7.3) </li>
+  <li> Bedtools (>=2.2.3) </li>
+</ol>
+
+## Python Package Requirements
+<ol>
+  <li> Numpy (>=1.15.4) </li>
+  <li> Pandas (>=0.23.4) </li>
+  <li> Networkx (>=2.2) </li>
+  <li> matplotlib (>=2.2.3) </li>
+  <li> Bio-python (>=1.73) </li>
+</ol>  
+
+## Running binnacle
+
+Before running binnacle, we run genomecov(-d) on the bed file obtained by mapping reads onto contigs. We also run metacarvel with repeat detection(-r) enabled
+(https://github.com/marbl/MetaCarvel/wiki) and the assembly graph output is used to estimate coverages. 
+
+To run binnacle, call the python wrapper script **src/Calculate_Coverages.py** with the following parameters, 
+<ol>
+  <li> Path to the metacarvel assembly graph</li>
+  <li> Path to the output from running genomecov(-d option enabled) on the bed file obtained from mapping reads on to the contigs. </li>
+  <li> Output directory. The location where you want the outputs to be written to. </li>
+  <li> Path to the fasta file containing the contigs obtained as a result of assembly. </i>
+</ol> 
+
+The bash script **src/Calculate_Coverages.sh** gives a typical example of running an array job for 20 samples in the SLURM cluster. 

@@ -14,8 +14,8 @@ In the following section, we describe all the functions associated with **Comput
 <ol> 
     <li>This function computes the global coordinate system for the scaffold(connected component) based on the length of the contigs in the connected component and the linking information as returned by MetaCarvel. We assign (0, len(u)) where u is an "available vertex" of the subgraph. Available vertex is any vertex in the subgraph that has indegree 0. For all other vertices we assign coordinates in the global coorinate system in breadth first manner.</li>   
     <li>We also consider the contig orientations and the edge orientations in accurate estimation of coordinates. </li>
-    <li>If there multiple possible assignments we pick the one that has the largest coordinate value. We choose the greedy approaach because the number of solutions grows exponentially and the problem is NP-Hard! </li>
-    <li>Finally, we normalize all other positions based on the least cooridnate value so that the coorinate system starts with 0.</li>
+    <li>If there multiple possible assignments we pick the one that has the largest coordinate value. We choose the greedy approaach because the number of solutions grows exponentially and the problem can be shown to be NP-Complete! </li>
+    <li>Finally, we normalize all other positions based on the least cooridnate value so that the coordinate system starts with 0.</li>
     <li>The input to the program is the connected component subgraph of the assembly graph "oriented.gml" which is a result of running MetaCarvel.</li>
 </ol>
 
@@ -53,9 +53,9 @@ To compute changepoints along the scaffold we slide a window of default size 150
 
 <ol>
     <li>The following code segment is used to identify outliers in change points. To do so, we compute the peaks first.</li> 
-    <li>We don't directly identify outliers on the signal because doing so would pickup points near the peaks, these are indicators of sliding windows and not really outliers. Our change point statistic is computed as follows. Let $\mu_i$ and $\mu_{i+1}$ the means of the subsequent windows, out statistic is given by $$\rho = \frac{max(\mu_i, \mu_{i+1})}{min(\mu_i, \mu_{i+1})}$$</li> 
+    <li>We don't directly identify outliers on the signal because doing so would pickup points near the peaks, these are indicators of sliding windows and not really outliers. 
     <li>To overcome the issue, we first identify peaks. A point is a peak if a point is larger than its predecessor and successor. This is performed by the function *ID_Peaks*.</li> 
-    <li>The output of this passed to *ID\_outliers* which picks all those points that is gretaer than the point which is the *thresh*'s percentile. The default value of *thresh* is 98.5. </li>
+    <li>The output of this passed to *ID_outliers* which picks all those points that is gretaer than the point which is the *thresh*'s percentile. The default value of *thresh* is 98.5. </li>
     <li>The filter outliers is still a work in progress. This is aimed at removing all the outliers points that is close to one another, but this is not super important. While the mthod described in the following block is data driven we are working on improving this method by examining the underlying graph structure.</li>
 </ol>
 
@@ -108,14 +108,14 @@ In the following section we describe the code fragments available in **Binnacle_
 
 **Function**: Load_Read_Coverage_and_Assembly_Graph<br/>
 **Input**: Path to the Assembly Graph, Path to the output og running genomecov<br/>
-**Output**: Return a networkx graph object and dataframe containing the output of genomecov
+**Output**: Return a networkx graph object and dataframe containing the output of genomecov <br/>
 
 To compute the read coverages we use the *genomecov* program, part of the *bedtools* suite. We run *genomecov* with *-d* optional enabled so that we get the per base depth. The output of the prgram is utilized to compute the depth along the scaffold and this function loads the out of genomecov as a dataframe.   
 
 
 <h2> Computing Coverages and Writing the Results </h2> 
 
-**Function**: Write_Coverage_Outputs<br/>
+**Function**: Write_Coverage_Outputs<br\>
 **Input** : networkx object of assembly graph, dataframe of coverage, output directory to dump outputs <br\>
 **Output**: A tab seperated text file for each of the following, 
 <ol>
