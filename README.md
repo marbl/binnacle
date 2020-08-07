@@ -8,8 +8,14 @@ For 20 complex stool samples from the human microbiome project, we ran MetaBat w
 <img src="img/cumulative_len.png" width=400 /> <img src="img/contamination2completeness.png" width=300 />
 
 
-## Requirements:
+## Software Requirements:
 
+<ol>
+  <li> Python 3(3.7.3) </li>
+  <li> Bedtools (>=2.2.3) </li>
+</ol>
+
+## Python Package Requirements
 <ol>
   <li> Python 3(3.7.3) </li>
   <li> Numpy (>=1.15.4) </li>
