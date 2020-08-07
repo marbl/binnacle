@@ -53,9 +53,9 @@ To compute changepoints along the scaffold we slide a window of default size 150
 
 <ol>
     <li>The following code segment is used to identify outliers in change points. To do so, we compute the peaks first.</li> 
-    <li>We don't directly identify outliers on the signal because doing so would pickup points near the peaks, these are indicators of sliding windows and not really outliers. Our change point statistic is computed as follows. Let $\mu_i$ and $\mu_{i+1}$ the means of the subsequent windows, out statistic is given by $$\rho = \frac{max(\mu_i, \mu_{i+1})}{min(\mu_i, \mu_{i+1})}$$</li> 
+    <li>We don't directly identify outliers on the signal because doing so would pickup points near the peaks, these are indicators of sliding windows and not really outliers. 
     <li>To overcome the issue, we first identify peaks. A point is a peak if a point is larger than its predecessor and successor. This is performed by the function *ID_Peaks*.</li> 
-    <li>The output of this passed to *ID\_outliers* which picks all those points that is gretaer than the point which is the *thresh*'s percentile. The default value of *thresh* is 98.5. </li>
+    <li>The output of this passed to *ID_outliers* which picks all those points that is gretaer than the point which is the *thresh*'s percentile. The default value of *thresh* is 98.5. </li>
     <li>The filter outliers is still a work in progress. This is aimed at removing all the outliers points that is close to one another, but this is not super important. While the mthod described in the following block is data driven we are working on improving this method by examining the underlying graph structure.</li>
 </ol>
 
