@@ -7,3 +7,15 @@ For 20 complex stool samples from the human microbiome project, we ran MetaBat w
 
 <img src="img/cumulative_len.png" width=400 /> <img src="img/contamination2completeness.png" width=300 />
 
+
+## Requirements:
+
+<ol>
+  <li> Python 3(3.7.3) <\li>
+  <li> Numpy (>=1.15.4) <\li>
+  <li> Pandas (>=0.23.4) <\li>
+  <li> Networkx (>=2.2) <\li>
+  <li> matplotlib (>=2.2.3) <\li>
+  <li> Bio-python (>=1.73) <\li>
+<\ol>  
+  
