@@ -95,7 +95,7 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
             Pos_Dict = Return_Contig_Scaffold_Positions(coords)
             g_removed = Get_Outlier_Contigs(outliers, Pos_Dict, coords, test, 100)
             
-            mu, dev = round(np.mean(coverage),1), round(np.mean(coverage),1)
+            mu, dev = round(np.mean(coverage),1), round(np.std(coverage),1)
             d_before_dlink = bytes(str(cc_before_delinking) + '\t' + str(mu) + '\t' + str(dev) + '\n', encoding = 'utf-8')
             wb_summary_before_delinking.write(d_before_dlink)
 
@@ -117,7 +117,7 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
                             min_node, min_indegree = Return_Starting_Point(cc)
                     else: min_node = nodes_cc[0]
                     coverage_cc, coords_cc = Compute_Coverage(cc, df_coverage_cc, min_node)
-                    mu, dev = round(np.mean(coverage_cc),1), round(np.mean(coverage_cc),1)
+                    mu, dev = round(np.mean(coverage_cc),1), round(np.std(coverage_cc),1)
                     d_after_dlink = bytes(str(cc_after_delinking)+'\t'+str(mu)+'\t'+str(dev)+'\n', encoding = 'utf-8')
                     wb_summary_after_delinking.write(d_after_dlink)
                     
@@ -129,7 +129,7 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
                         wb_coords_after_delinking.write(d)
 
         if (flag):
-            mu, dev = round(np.mean(coverage),1), round(np.mean(coverage),1)
+            mu, dev = round(np.mean(coverage),1), round(np.std(coverage),1)
             d_before_dlink = bytes(str(cc_before_delinking) + '\t'+  str(mu) +'\t'+ str(dev) + '\n', encoding = 'utf-8')
             d_after_dlink = bytes(str(cc_after_delinking) + '\t'+  str(mu) +'\t'+ str(dev) + '\n', encoding = 'utf-8')
             wb_summary_before_delinking.write(d_before_dlink)
@@ -187,3 +187,18 @@ def Write_Scaffolds(Contigs_Path, Coords_Path, op_path):
         wb.flush()
     except FileNotFoundError:
         print('Check Filepaths. File not Found')
+
+def Format_Outputs(binning_method, coverage_path, outdir):
+    df = pd.read_csv(coverage_path, sep='\t', names = ['Scaffold_id','Mean','Deviation'], index_col = ['Scaffold_id'])
+    if (binning_method == 'Metabat') or (binning_method == 'metabat') or (binning_method == 'METABAT'):
+        df.to_csv(outdir+'Coverage_Metabat.txt', sep = '\t')
+    elif (binning_method == 'Maxbin2') or (binning_method == 'maxbin2') or (binning_method == 'MAXBIN2'):
+        del df['Deviation']
+        df.to_csv(outdir+'Coverage_Maxbin2.txt', sep = '\t', header = False)
+    elif (binning_method == 'Concoct') or (binning_method == 'concoct') or (binning_method == 'CONCOCT'):
+        del df['Deviation']
+        df.to_csv(outdir+'Coverage_Concoct.txt', sep = '\t', header = False)
+    else:
+        pass
+       
+
