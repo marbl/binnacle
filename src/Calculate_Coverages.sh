@@ -16,4 +16,5 @@ graphpath=/fs/cbcb-lab/mpop/MetaCarvel_paper/hmp_scaffolds/stool/${sample}/${sam
 coverage_path=/fs/cbcb-lab/mpop/projects/refining_bins_with_assembly_graphs/genomecov_d/${sample}.txt
 output_path=/fs/cbcb-scratch/hsmurali/Binnacle_Scaffold_Coverages/${sample}/
 contigs_path=/fs/cbcb-lab/mpop/MetaCarvel_paper/hmp_scaffolds/stool/${sample}/${sample}.fna
-time python Calculate_Coverages.py ${graphpath} ${coverage_path} ${output_path} ${contigs_path}
+
+time python Calculate_Coverages.py -g ${graphpath} -a ${coverage_path} -d ${output_path} -c ${contigs_path} 
