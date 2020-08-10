@@ -115,9 +115,9 @@ To compute the read coverages we use the *genomecov* program, part of the *bedto
 
 <h2> Computing Coverages and Writing the Results </h2> 
 
-**Function**: Write_Coverage_Outputs<br\>
-**Input** : networkx object of assembly graph, dataframe of coverage, output directory to dump outputs <br\>
-**Output**: A tab seperated text file for each of the following, 
+**Function**: Write_Coverage_Outputs<br/>
+**Input** : networkx object of assembly graph, dataframe of coverage, output directory to dump outputs <br/>
+**Output**: A tab seperated text file for each of the following, <br/>
 <ol>
     <li>Global Coordinates for the Scaffold Before Delinking with the Headers: 
         <ol><li>Scaffold id</li> 
