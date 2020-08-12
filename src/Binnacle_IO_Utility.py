@@ -39,9 +39,8 @@ def Load_Read_Coverage_and_Assembly_Graph(graphpath, covpath):
 def Write_Coverage_Outputs(graph,df_coverage, outdir):
     if not isdir(outdir):
         mkdir(outdir)
-    weakly_connected_components = list(nx.weakly_connected_component_subgraphs(graph))
-    print(len(weakly_connected_components))
-    t = len(weakly_connected_components)
+        
+    weakly_connected_components = nx.weakly_connected_components(graph)
     
     coverage_before_delinking = io.FileIO(outdir +'Coverages_Before_Delinking.txt', 'w')
     coords_before_delinking = io.FileIO(outdir + 'Coords_Before_Delinking.txt', 'w')
@@ -59,8 +58,8 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
     
     cc_before_delinking, cc_after_delinking = 0, 0
 
-    for j in range(len(weakly_connected_components)):
-        test = weakly_connected_components[j]
+    for conn in weakly_connected_components:
+        test = nx.DiGraph(graph.subgraph(conn))
         nodes = list(test.nodes())
         
         if len(nodes) > 1:
