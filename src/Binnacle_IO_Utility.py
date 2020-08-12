@@ -7,9 +7,8 @@ from Compute_Scaffold_Coverages_Utility import *
 #     
 # To compute the read coverages we use the *genomecov* program, part of the *bedtools* suite. 
 # We run *genomecov* with *-d* optional enabled so that we get the per base depth. 
-# The output of the prgram is utilized to compute the depth along the scaffold and this function loads the out of genomecov as a dataframe.   
+# The output of the prgram is utilized to compute the depth along the scaffold and this function loads the output of genomecov as a dataframe.   
 
-# In[3]:
 
 
 def Load_Read_Coverage_and_Assembly_Graph(graphpath, covpath):
@@ -189,15 +188,16 @@ def Write_Scaffolds(Contigs_Path, Coords_Path, op_path):
 
 def Format_Outputs(binning_method, coverage_path, outdir):
     df = pd.read_csv(coverage_path, sep='\t', names = ['Scaffold_id','Mean','Deviation'], index_col = ['Scaffold_id'])
-    if (binning_method == 'Metabat') or (binning_method == 'metabat') or (binning_method == 'METABAT'):
+    if (binning_method.lower().startswith("metabat")):
         df.to_csv(outdir+'Coverage_Metabat.txt', sep = '\t')
-    elif (binning_method == 'Maxbin2') or (binning_method == 'maxbin2') or (binning_method == 'MAXBIN2'):
+    elif (binning_method.lower().startwith("maxbin")):
         del df['Deviation']
         df.to_csv(outdir+'Coverage_Maxbin2.txt', sep = '\t', header = False)
-    elif (binning_method == 'Concoct') or (binning_method == 'concoct') or (binning_method == 'CONCOCT'):
+    elif (binning_method.lower().startwith("concoct")) or (binning_method == 'CONCOCT'):
         del df['Deviation']
         df.to_csv(outdir+'Coverage_Concoct.txt', sep = '\t', header = False)
     else:
+        ## Need to add Binnacle clustering
         pass
        
 
