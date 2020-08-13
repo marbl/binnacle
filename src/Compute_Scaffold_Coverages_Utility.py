@@ -11,6 +11,7 @@ from os import mkdir
 from os.path import isdir
 from copy import deepcopy
 from random import choice
+from scipy.stats import norm
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
@@ -160,7 +161,23 @@ def Compute_Coverage(connected_component, df_coverage, start):
 #Any abnromal spike magnitude indicates a change point. If the size of the contig is less than the size of the window we adaptively pick a smaller window. 
 
 # In[5]:
+def Helper_Changepoints_Z_Stat(cov_vec, window_size=1500):
+    indices_non_zero = np.where(cov_vec > 0)
+    sliced = cov_vec[indices_non_zero]
 
+    while window_size >= len(sliced)/2:
+        window_size = int(window_size/5)
+
+    mean = np.array(pd.Series(sliced).rolling(window_size).mean())[window_size-1:]
+    sd = np.array(pd.Series(sliced).rolling(window_size).std())[window_size-1:]
+
+    mu_1, mu_2 = mean[0:len(mean)-window_size-1], mean[window_size+1:]
+    sd_1, sd_2 = sd[0:len(sd)-window_size-1],sd[window_size+1:]
+    test_stat = [0]*window_size + list((mu_1 - mu_2)/(np.sqrt(sd_1**2+sd_2**2))) + [0]*window_size
+
+    cpts = np.zeros(len(cov_vec))
+    cpts[indices_non_zero] = test_stat
+    return cpts
 
 def Helper_Changepoints(cov_vec, window_size = 1500):
     indices_non_zero = np.where(cov_vec > 0)
@@ -190,11 +207,12 @@ def Helper_Changepoints(cov_vec, window_size = 1500):
 
 
 def ID_outliers(change_point_vec, thresh):
-    cutoff = np.percentile(change_point_vec, thresh)
-    indices = np.where(change_point_vec >= cutoff)
-    return indices
+    cutoff_upper = np.percentile(change_point_vec, thresh)
+    cutoff_lower = np.percentile(change_point_vec, 100-thresh)
+    indices = np.where(((change_point_vec >= cutoff_upper) | (change_point_vec <= cutoff_lower)))
+    return indices[0]
 
-def ID_Peaks(change_point_vec, thresh = 98.5):
+def ID_Peaks(change_point_vec, thresh=99):
     left_shift, curr_vec, right_shift = change_point_vec[0:-2], change_point_vec[1:-1], change_point_vec[2:]
     left_diff, right_diff = curr_vec - left_shift, curr_vec - right_shift
     Peak_Indices = np.array(list(set(np.where(left_diff >= 0)[0]).intersection(set(np.where(right_diff >= 0)[0]))))+1
@@ -244,7 +262,11 @@ def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff = 10
     g_ = deepcopy(graph)
     potential_contigs_removal = {}
     for o in outliers:
-        contigs_intersecting = positions[o]
+        try:
+            contigs_intersecting = positions[o]
+        except KeyError:
+            print('KeyError', o, np.max(positions.keys()))
+            continue
         closest_contig, closest_contig_val = '',np.inf
         forward, start = True, True
         for contig in contigs_intersecting:
@@ -309,7 +331,6 @@ def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff = 10
 # The second figure plots the coverage of a contig with respect to its predecessors and successors. 
 
 # In[31]:
-
 
 def Return_Contig_Scaffold_Positions(coordinate_dictionary):
     pos_dict = {}

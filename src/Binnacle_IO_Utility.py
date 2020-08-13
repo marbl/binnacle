@@ -73,22 +73,29 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
         df_coverage_cc = df_coverage.loc[nodes]
         coverage, coords = Compute_Coverage(test, df_coverage_cc, min_node)
         
-        for i in range(len(coverage)):
-            d = bytes(str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\n', encoding = 'utf-8')
-            wb_cov_before_delinking.write(d)  
-        for c in coords:
-            d = bytes(str(cc_before_delinking)+'\t'+c+'\t'+ str(coords[c][0]) + '\t' +  str(coords[c][1]) + '\n', encoding = 'utf-8')
-            wb_coords_before_delinking.write(d)
             
         flag = False
 
         if len(nodes) == 1:
+            for i in range(len(coverage)):
+                d = bytes(str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\t0\n', encoding = 'utf-8')
+                wb_cov_before_delinking.write(d)  
+            for c in coords:
+                d = bytes(str(cc_before_delinking)+'\t'+c+'\t'+ str(coords[c][0]) + '\t' +  str(coords[c][1]) + '\n', encoding = 'utf-8')
+                wb_coords_before_delinking.write(d)
             cc_after_delinking += 1
             flag =  True
 
         if len(nodes) > 1:
-            mean_ratios = Helper_Changepoints(deepcopy(coverage))
-            outliers = ID_Peaks(mean_ratios)
+            mean_ratios = Helper_Changepoints_Z_Stat(deepcopy(coverage))
+            for i in range(len(coverage)):
+                d = bytes(str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\t'+str(mean_ratios[i])+'\n', encoding = 'utf-8')
+                wb_cov_before_delinking.write(d)  
+            for c in coords:
+                d = bytes(str(cc_before_delinking)+'\t'+c+'\t'+ str(coords[c][0]) + '\t' +  str(coords[c][1]) + '\n', encoding = 'utf-8')
+                wb_coords_before_delinking.write(d)
+
+            outliers = ID_outliers(mean_ratios, 99)
             outliers = Filter_Neighbors(outliers, mean_ratios)
             Pos_Dict = Return_Contig_Scaffold_Positions(coords)
             g_removed = Get_Outlier_Contigs(outliers, Pos_Dict, coords, test, 100)
@@ -98,7 +105,7 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
             wb_summary_before_delinking.write(d_before_dlink)
 
             delinked_conn_comps = list(nx.weakly_connected_component_subgraphs(g_removed))
-            print('Debug---->', cc_before_delinking, len(nodes), len(delinked_conn_comps))
+            print('Debug---->', cc_before_delinking, len(nodes), len(delinked_conn_comps), len(coverage), len(mean_ratios))
 
             if len(delinked_conn_comps) == 1:
                 cc_after_delinking += 1
