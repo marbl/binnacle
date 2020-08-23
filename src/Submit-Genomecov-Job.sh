@@ -7,7 +7,7 @@
 #SBATCH --time=0-18:00:00
 #SBATCH --qos=throughput
 #SBATCH --mem=36gb
-#SBATCH --array=1-20
+#SBATCH --array=2-20
 
-file=`head -n ${SLURM_ARRAY_TASK_ID} GenomeCov.txt | tail -n 1`
+file=`head -n ${SLURM_ARRAY_TASK_ID} samples.txt | tail -n 1`
 bash Run-Genomecov-d.sh ${file}

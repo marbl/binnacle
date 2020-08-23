@@ -1,6 +1,8 @@
 import io
+import subprocess
 from Bio import SeqIO
-from os.path import isfile
+from os import remove, mkdir, listdir
+from os.path import isfile, isdir
 from Compute_Scaffold_Coverages_Utility import *
 
 # <h2> Computing Coverages </h2>
@@ -9,31 +11,28 @@ from Compute_Scaffold_Coverages_Utility import *
 # We run *genomecov* with *-d* optional enabled so that we get the per base depth. 
 # The output of the prgram is utilized to compute the depth along the scaffold and this function loads the output of genomecov as a dataframe.   
 
+def Load_Read_Coverage(covpath, nodes, opdir):
+    nodes.sort()
+    node_list_str = '\n'.join(nodes)
+    f = open(opdir+'Temp_Node_List.txt','w')
+    f.write(node_list_str)
+    f.close()
 
-
-def Load_Read_Coverage_and_Assembly_Graph(graphpath, covpath):
-    G = nx.read_gml(graphpath)
-    nodes = list(G.nodes())
-    df_coverage = pd.DataFrame()
+    temp_cov_path = opdir+'Temp_Cov.txt'
+    command = 'LANG=en_EN join '+opdir+'Temp_Node_List.txt '+covpath+'>'+temp_cov_path
+    result = subprocess.getoutput(command)
     
-    df_coverage_chunks = pd.read_csv(covpath,names = ['Contig','Loc','coverage'], 
-                              sep = '\t', low_memory = False, memory_map = True, 
+    df_coverage = pd.read_csv(temp_cov_path,names = ['Contig','Loc','coverage'], 
+                              sep = ' ', low_memory = False, memory_map = True, 
                               dtype = {'Contig': str, 'Loc': 'int32', 'coverage': 'int32'},
-                              engine='c', chunksize = 5000000, index_col = ['Contig'])
-    for chunk in df_coverage_chunks:
-        chunk.index = chunk.index.astype('str')
-        nodes_pres = list(set(chunk.index.tolist()).intersection(set(nodes)))
-        temp = chunk.loc[nodes_pres]
-        temp = temp.reset_index()
-        df_coverage = pd.concat([df_coverage, temp])
-
+                              engine='c')
     df_coverage['Loc'] = df_coverage['Loc']-1
-    df_coverage = df_coverage.sort_values(by = ['Contig', 'Loc'])
+    df_coverage = df_coverage.sort_values(by = ['Contig','Loc'])
     df_coverage = df_coverage.set_index('Contig')
-    print(df_coverage.info())
-    return df_coverage, G
-
-
+    remove(opdir+'Temp_Node_List.txt')
+    remove(temp_cov_path)
+    print(df_coverage.info(), '\n')
+    return df_coverage
 
 def Write_Coverage_Outputs(graph,df_coverage, outdir):
     if not isdir(outdir):
@@ -60,7 +59,7 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
     for conn in weakly_connected_components:
         test = nx.DiGraph(graph.subgraph(conn))
         nodes = list(test.nodes())
-        
+
         if len(nodes) > 1:
             min_node, min_indegree = Return_Starting_Point(test)
             if min_indegree > 0: 
@@ -71,47 +70,41 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
 
         cc_before_delinking += 1
         df_coverage_cc = df_coverage.loc[nodes]
-        coverage, coords = Compute_Coverage(test, df_coverage_cc, min_node)
-        
+        coords = Compute_Global_Coordinates(test, min_node)
+        coverage = Compute_Coverage(df_coverage_cc, coords)
             
         flag = False
+        for i in range(len(coverage)):
+            d = bytes(str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\n', encoding = 'utf-8')
+            wb_cov_before_delinking.write(d)  
+        for c in coords:
+            d = bytes(str(cc_before_delinking)+'\t'+c+'\t'+ str(coords[c][0]) + '\t' +  str(coords[c][1]) + '\n', encoding = 'utf-8')
+            wb_coords_before_delinking.write(d)
 
         if len(nodes) == 1:
-            for i in range(len(coverage)):
-                d = bytes(str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\t0\n', encoding = 'utf-8')
-                wb_cov_before_delinking.write(d)  
-            for c in coords:
-                d = bytes(str(cc_before_delinking)+'\t'+c+'\t'+ str(coords[c][0]) + '\t' +  str(coords[c][1]) + '\n', encoding = 'utf-8')
-                wb_coords_before_delinking.write(d)
             cc_after_delinking += 1
             flag =  True
 
         if len(nodes) > 1:
             mean_ratios = Helper_Changepoints_Z_Stat(deepcopy(coverage))
-            for i in range(len(coverage)):
-                d = bytes(str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\t'+str(mean_ratios[i])+'\n', encoding = 'utf-8')
-                wb_cov_before_delinking.write(d)  
-            for c in coords:
-                d = bytes(str(cc_before_delinking)+'\t'+c+'\t'+ str(coords[c][0]) + '\t' +  str(coords[c][1]) + '\n', encoding = 'utf-8')
-                wb_coords_before_delinking.write(d)
-
             outliers = ID_outliers(mean_ratios, 99)
             outliers = Filter_Neighbors(outliers, mean_ratios)
             Pos_Dict = Return_Contig_Scaffold_Positions(coords)
             g_removed = Get_Outlier_Contigs(outliers, Pos_Dict, coords, test, 100)
             
-            mu, dev = round(np.mean(coverage),1), round(np.std(coverage),1)
-            d_before_dlink = bytes(str(cc_before_delinking) + '\t' + str(mu) + '\t' + str(dev) + '\n', encoding = 'utf-8')
+            mu, dev, span = round(np.mean(coverage),1), round(np.std(coverage),1), len(coverage)
+            d_before_dlink = bytes(str(cc_before_delinking) + '\t' + str(span) + '\t' + str(mu) + '\t' + str(dev) + '\n', encoding = 'utf-8')
             wb_summary_before_delinking.write(d_before_dlink)
 
-            delinked_conn_comps = list(nx.weakly_connected_component_subgraphs(g_removed))
-            print('Debug---->', cc_before_delinking, len(nodes), len(delinked_conn_comps), len(coverage), len(mean_ratios))
+            delinked_conn_comps = list(nx.weakly_connected_components(g_removed))
+            print('Debug---->', cc_before_delinking, len(nodes), len(delinked_conn_comps))
 
             if len(delinked_conn_comps) == 1:
                 cc_after_delinking += 1
                 flag = True  
             else:
-                for cc in delinked_conn_comps:
+                for comp in delinked_conn_comps:
+                    cc = nx.DiGraph(graph.subgraph(comp))
                     cc_after_delinking += 1
                     nodes_cc = list(cc.nodes())
 
@@ -121,9 +114,10 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
                             cc = Random_Simplify(cc, min_node)
                             min_node, min_indegree = Return_Starting_Point(cc)
                     else: min_node = nodes_cc[0]
-                    coverage_cc, coords_cc = Compute_Coverage(cc, df_coverage_cc, min_node)
-                    mu, dev = round(np.mean(coverage_cc),1), round(np.std(coverage_cc),1)
-                    d_after_dlink = bytes(str(cc_after_delinking)+'\t'+str(mu)+'\t'+str(dev)+'\n', encoding = 'utf-8')
+                    coords_cc = Compute_Global_Coordinates(cc, min_node)
+                    coverage_cc = Compute_Coverage(df_coverage_cc, coords_cc)
+                    mu, dev, span = round(np.mean(coverage_cc),1), round(np.std(coverage_cc),1), len(coverage_cc)
+                    d_after_dlink = bytes(str(cc_after_delinking)+'\t'+str(span)+'\t'+str(mu)+'\t'+str(dev)+'\n', encoding = 'utf-8')
                     wb_summary_after_delinking.write(d_after_dlink)
                     
                     for i in range(len(coverage_cc)):
@@ -134,9 +128,9 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir):
                         wb_coords_after_delinking.write(d)
 
         if (flag):
-            mu, dev = round(np.mean(coverage),1), round(np.std(coverage),1)
-            d_before_dlink = bytes(str(cc_before_delinking) + '\t'+  str(mu) +'\t'+ str(dev) + '\n', encoding = 'utf-8')
-            d_after_dlink = bytes(str(cc_after_delinking) + '\t'+  str(mu) +'\t'+ str(dev) + '\n', encoding = 'utf-8')
+            mu, dev, span = round(np.mean(coverage),1), round(np.std(coverage),1), len(coverage)
+            d_before_dlink = bytes(str(cc_before_delinking) + '\t'+ str(span)+'\t'+ str(mu) +'\t'+ str(dev) + '\n', encoding = 'utf-8')
+            d_after_dlink = bytes(str(cc_after_delinking) + '\t'+ str(span)+'\t' +str(mu) +'\t'+ str(dev) + '\n', encoding = 'utf-8')
             wb_summary_before_delinking.write(d_before_dlink)
             wb_summary_after_delinking.write(d_after_dlink)
             
@@ -192,19 +186,3 @@ def Write_Scaffolds(Contigs_Path, Coords_Path, op_path):
         wb.flush()
     except FileNotFoundError:
         print('Check Filepaths. File not Found')
-
-def Format_Outputs(binning_method, coverage_path, outdir):
-    df = pd.read_csv(coverage_path, sep='\t', names = ['Scaffold_id','Mean','Deviation'], index_col = ['Scaffold_id'])
-    if (binning_method.lower().startswith("metabat")):
-        df.to_csv(outdir+'Coverage_Metabat.txt', sep = '\t')
-    elif (binning_method.lower().startwith("maxbin")):
-        del df['Deviation']
-        df.to_csv(outdir+'Coverage_Maxbin2.txt', sep = '\t', header = False)
-    elif (binning_method.lower().startwith("concoct")) or (binning_method == 'CONCOCT'):
-        del df['Deviation']
-        df.to_csv(outdir+'Coverage_Concoct.txt', sep = '\t', header = False)
-    else:
-        ## Need to add Binnacle clustering
-        pass
-       
-

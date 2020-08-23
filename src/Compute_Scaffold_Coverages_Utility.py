@@ -7,13 +7,7 @@
 import numpy as np
 import pandas as pd
 import networkx as nx
-from os import mkdir
-from os.path import isdir
 from copy import deepcopy
-from random import choice
-from scipy.stats import norm
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 
 # <h2>Computing Global Coordinates</h2>
 # <ol> 
@@ -137,21 +131,23 @@ def Compute_Global_Coordinates(subgraph, v_0):
 # In[4]:
 
 
-def Compute_Coverage(connected_component, df_coverage, start):
-    top_sort = list(connected_component.nodes())
-    coords = Compute_Global_Coordinates(connected_component, start)
+def Compute_Coverage(df_coverage, coords):
+    top_sort = list(coords.keys())
     max_coord = -np.inf
     for c in top_sort:
         max_v = max(coords[c])
         if max_v >= max_coord: max_coord = max_v
     coverage = np.zeros(max_coord+1)
-    for c in top_sort:
-        contig_depth = np.array(df_coverage.loc[c]['coverage'])
-        s,e = coords[c]
-        if (s > e): coverage[s:e:-1] += contig_depth
-        else: coverage[s:e] += contig_depth
-        assert np.abs(s-e) == len(contig_depth), top_sort
-    return coverage, coords
+    try:
+        for c in top_sort:
+            contig_depth = np.array(df_coverage.loc[c]['coverage'])
+            s,e = coords[c]
+            if (s > e): coverage[s:e:-1] += contig_depth
+            else: coverage[s:e] += contig_depth
+            assert np.abs(s-e) == len(contig_depth), top_sort
+    except Exception:
+        print('Did you sort the coverage files by contig ids before running binnacle???? Exiting with error...')
+    return coverage
 
 
 # <h2> Change Point Detection on the Scaffold Coverage </h2>
@@ -164,17 +160,13 @@ def Compute_Coverage(connected_component, df_coverage, start):
 def Helper_Changepoints_Z_Stat(cov_vec, window_size=1500):
     indices_non_zero = np.where(cov_vec > 0)
     sliced = cov_vec[indices_non_zero]
-
     while window_size >= len(sliced)/2:
         window_size = int(window_size/5)
-
     mean = np.array(pd.Series(sliced).rolling(window_size).mean())[window_size-1:]
     sd = np.array(pd.Series(sliced).rolling(window_size).std())[window_size-1:]
-
     mu_1, mu_2 = mean[0:len(mean)-window_size-1], mean[window_size+1:]
     sd_1, sd_2 = sd[0:len(sd)-window_size-1],sd[window_size+1:]
     test_stat = [0]*window_size + list((mu_1 - mu_2)/(np.sqrt(sd_1**2+sd_2**2))) + [0]*window_size
-
     cpts = np.zeros(len(cov_vec))
     cpts[indices_non_zero] = test_stat
     return cpts
@@ -314,23 +306,6 @@ def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff = 10
                 edges = [(c,succ) for succ in successors]
                 g_.remove_edges_from(edges)
     return g_
-         
-
-
-# <h2> Visualize the Results </h2>
-# 
-# In this code fragment we plot two figures, one describing 
-# <ol>
-#     <li>The Pileup of Contigs</li> 
-#     <li>Coverages along the global Coordinate </li> 
-#     <li>Change Point Metric </li> 
-#     <li>The Coverages of the Various Contigs in the Scaffold</li> 
-#     The program calls the methods above to perform the computations. 
-# </ol>
-# 
-# The second figure plots the coverage of a contig with respect to its predecessors and successors. 
-
-# In[31]:
 
 def Return_Contig_Scaffold_Positions(coordinate_dictionary):
     pos_dict = {}
