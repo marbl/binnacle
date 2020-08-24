@@ -102,7 +102,10 @@ The above function returns the node with lowest indegree and the indegree value.
 
 Most of the scaffolds in the sample form a Directed Acyclic Graph. Some of the induce a cycle. Even if the scaffold has a cycle we look for an available vertex if not, the above code fragment converts the graph into a DAG by randonly snipping an edge in the simple cycle(s) in the scaffold. 
 
-<img src="/../img/workflow.jpg" />
+<td> 
+    <p align="center"><img src="../img/Workflow.jpg" width=400/></p>
+    <p align="center"><em>Workflow to compute scaffold coverages</em><center></p>
+</td>
  
 In the following section we describe the code fragments available in **Binnacle_IO_Utility.py** which deals with loading and processing the function described in this section.
 
