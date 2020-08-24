@@ -1,26 +1,26 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
+'''
+Program developed at Pop lab at the CBCB, University of Maryland by 
+Harihara Subrahmaniam Muralidharan, Nidhi Shah, Jacquelyn S Meisel. 
+'''
 
 import numpy as np
 import pandas as pd
 import networkx as nx
 from copy import deepcopy
 
-# <h2>Computing Global Coordinates</h2>
-# <ol> 
-#     <li>This function computes the global coordinate system for the scaffold(connected component) based on the length of the contigs in the connected component and the linking information as returned by MetaCarvel. We order the contigs based on the topological sort of the subgraph and assign coordinates in the global coorinate system in breadth first manner.</li>   
-#     <li>We also consider the contig orientations and the edge orientations in accurate estimation of coordinates. </li>
-#     <li>If there multiple possible assignments we pick the one that has the largest coordinate value. We choose the greedy approaach because the number of solutions grows exponentially and the problem is NP-Hard! </li>
-#     <li>Finally, we normalize all other positions based on the least cooridnate value so that the coorinate system starts with 0.</li>
-#     <li>The input to the program is the connected component subgraph of the assembly graph ``oriented.gml" which is a result of running MetaCarvel.</li>
-# </ol>
-
-# In[2]:
-
 def Return_Starting_Point(subgraph):
+    '''
+    Function to return the starting point to assign coordinates on the global frame of reference. 
+    The starting node has an indegree equal to 0
+    Input:
+        subgraph: The graph pertaining to the DAG.
+    Output:
+        min_node: Node with the lowest indegree
+        min_indegree: min_node's indegree
+    '''
     nodes = list(subgraph.nodes())
     min_node, min_indegree = '', np.inf
     for n in nodes:
@@ -29,6 +29,16 @@ def Return_Starting_Point(subgraph):
     return min_node, min_indegree
 
 def Random_Simplify(subgraph_, min_indegree_node):
+    '''
+    Function to randomly simplify a simple cycle. This routine is only called if there are no available 
+    nodes in the graph to assign coordinates. 
+    Input: 
+        subgraph_: A graph to simplify and usually contains one or more simple cycles.
+        min_indegree_node: Returns the node to simplify. We choose to simplify the node with the minimum 
+        indegree to simplify.
+    Output:
+        subgraph: Returns the graph after simplification.
+    '''
     subgraph = deepcopy(subgraph_)
     cycles = nx.simple_cycles(subgraph)
     edges_removal_set = []
@@ -40,6 +50,14 @@ def Random_Simplify(subgraph_, min_indegree_node):
     return subgraph
 
 def Compute_Global_Coordinates(subgraph, v_0):
+    '''
+    Function to assign coordinates to contigs in the Directed Acyclic Graph(DAG). 
+    Input: 
+        Subgraph: A graph pertaining to the DAG.
+        v_0: Starting node to start assigning coordinate values. 
+    Output:
+        Returns a dictionary with contig ids as keys and coordinate values as values. 
+    '''
     v_0_orientation = subgraph.nodes[v_0]['orientation']
     v_0_length = int(subgraph.nodes[v_0]['length'])
     if v_0_orientation == 'FOW':
@@ -119,19 +137,15 @@ def Compute_Global_Coordinates(subgraph, v_0):
         global_coords[g] = s-min_coord, e-min_coord
     return global_coords
 
-
-
-# <h2> Computing the Depth of Coverage along the Scaffold's Global Coordinate System  </h2>
-# 
-# To compute the depth we run the *Compute_Global_Coordinates* and *Load_Read_Coverage* functions and pass this to the *Compute_Coverage* described below. 
-#This program estimates the per cooridnate depth by using the outputs of the said two information. 
-#The program returns the coverage along the entire scaffold and the coverage along the longest path and a dataframe contiaining the contig, 
-#its average depth and its coordinates in the scaffold.   
-
-# In[4]:
-
-
 def Compute_Coverage(df_coverage, coords):
+    '''
+    Function to compute the coverages of the DAG based on the coordinates assigned by the previous functions. 
+    Input:
+        df_coverage: A pandas dataframe containing the perbase of coverage of the contigs in the DAG.
+        coords: A dictionary containing the start and end points of the contig in the global frame of reference. 
+    Output:
+        A coverage vector for the entire DAG
+    '''
     top_sort = list(coords.keys())
     max_coord = -np.inf
     for c in top_sort:
@@ -149,15 +163,16 @@ def Compute_Coverage(df_coverage, coords):
         print('Did you sort the coverage files by contig ids before running binnacle???? Exiting with error...')
     return coverage
 
-
-# <h2> Change Point Detection on the Scaffold Coverage </h2>
-# 
-# To compute changepoints along the scaffold we slide a window of default size 1500 along the scaffold and 
-#take the ratios of the maximum of means of the window preceeding any point and the window suceeding the point and the minimum of the said quantities. 
-#Any abnromal spike magnitude indicates a change point. If the size of the contig is less than the size of the window we adaptively pick a smaller window. 
-
-# In[5]:
 def Helper_Changepoints_Z_Stat(cov_vec, window_size=1500):
+    '''
+    Function to compute outliers in coverage signals. We use the two sample two sample Z-tests. 
+    The z-statistic is calculated by z = \frac{\mu_1-\mu_2}{\sqrt{\sigma_1^2+\sigma_2^2}}
+    Input:
+        cov_vec: The Coverage Vector estimated by the previous function. 
+        window_size: Defaulting to 1500, this is the window size to identify change points. 
+    Output:
+        cpts: A vector of the change point statistic
+    '''
     indices_non_zero = np.where(cov_vec > 0)
     sliced = cov_vec[indices_non_zero]
     while window_size >= len(sliced)/2:
@@ -172,6 +187,16 @@ def Helper_Changepoints_Z_Stat(cov_vec, window_size=1500):
     return cpts
 
 def Helper_Changepoints(cov_vec, window_size = 1500):
+    '''
+    Function to compute outliers in coverage signals. We use our own test statistic. 
+    The test statistic is calculated by p = \frac{max{\mu_1,\mu_2}}{min{\mu_1,\mu_2}}
+    Note: This function is not used anymore. 
+    Input:
+        cov_vec: The Coverage Vector estimated by the previous function. 
+        window_size: Defaulting to 1500, this is the window size to identify change points. 
+    Output:
+        cpts: A vector of the change point statistic
+    '''
     indices_non_zero = np.where(cov_vec > 0)
     sliced = cov_vec[indices_non_zero]
     while window_size >= len(sliced)/2:
@@ -185,26 +210,30 @@ def Helper_Changepoints(cov_vec, window_size = 1500):
     cpts[indices_non_zero] = mean_ratios
     return cpts
 
-
-# <h2> Outlier Detection in Change Point Signals </h2>
-# <ol>
-#     <li>The following code segment is used to identify outliers in change points. To do so, we compute the peaks first.</li> 
-#     <li>We don't directly identify outliers on the signal because doing so would pickup points near the peaks, these are indicators of sliding windows and not really outliers.</li> 
-#     <li>To overcome the issue, we first identify peaks. A point is a peak if a point is larger than its predecessor and successor. This is performed by the function *ID_Peaks*.</li> 
-#     <li>The output of this passed to *ID_outliers* which picks all those points that is gretaer than the point which is the *thresh*'s percentile. The default value of *thresh* is 98.5. </li>
-#     <li>The filter outliers is still a work in progress. This is aimed at removing all the outliers points that is close to one another, but this is not super important. While the mthod described in the following block is data driven we are working on improving this method by examining the underlying graph structure.</li>
-# </ol>
-
-# In[6]:
-
-
 def ID_outliers(change_point_vec, thresh):
+    '''
+    Function to eastimate outliers in the change point statistic vector. 
+    Input:
+        change_point_vec: A vector of changepoints. 
+        thresh: Thresh to identify outliers. 
+    Outpu:
+        Indices: The indices on the change point statistic vector that are outliers. 
+    '''
     cutoff_upper = np.percentile(change_point_vec, thresh)
     cutoff_lower = np.percentile(change_point_vec, 100-thresh)
     indices = np.where(((change_point_vec >= cutoff_upper) | (change_point_vec <= cutoff_lower)))
     return indices[0]
 
 def ID_Peaks(change_point_vec, thresh=99):
+    '''
+    Function to identify peaks in the outlier list. Simple thresholding might result in identifying points 
+    that are close by which is an artifact of sliding window. The function is not necessarily used at the moment. 
+    Input:
+        change_point_vec: A vector of changepoints.
+        thresh: Default threshold for identifying outliers is the 99th percentile. 
+    Output:
+        Peak_Indices: Returns the filtered set of outliers. 
+    '''
     left_shift, curr_vec, right_shift = change_point_vec[0:-2], change_point_vec[1:-1], change_point_vec[2:]
     left_diff, right_diff = curr_vec - left_shift, curr_vec - right_shift
     Peak_Indices = np.array(list(set(np.where(left_diff >= 0)[0]).intersection(set(np.where(right_diff >= 0)[0]))))+1
@@ -214,6 +243,15 @@ def ID_Peaks(change_point_vec, thresh=99):
     return Peak_Indices[outlier_peaks]
 
 def Filter_Neighbors(outlier_list, changepoints, window_size = 100):
+    '''
+    Function to remove multiple outliers around a peak. 
+    Input:
+        outlier_list: The list of outlier indices as identified by the previous routines
+        changepoints:  a vector of the change point statistic
+        window_size: Defaulting to 100(typically the read length)
+    Output:
+        outlier_set: Filteres set of outliers after removing the neughbouring outliers.  
+    '''
     if len(outlier_list) == 0:
         return outlier_list
     filtered_outlier_list = []
@@ -235,22 +273,24 @@ def Filter_Neighbors(outlier_list, changepoints, window_size = 100):
     outlier_set.sort()
     return outlier_set
 
-
-# <h2> Rules for delinking contigs at change points. </h2> 
-# 
-# The rules for delinking the contigs are described below. The first row represent the orientation of the contig and the first colum represent the location of the contig relative to the contig at the change point. 
-# 
-# |#                   |  Forward            |  Reverse          |
-# |:------------------:|---------------------|-------------------|
-# |        Start       | Delink predecessor  | Delink successor  |
-# |          End       | Delink successor    | Delink predecessor|
-# 
-# The input to the program is the set of outliers, the dictionary containing the contigs at each position, a vector of means for detecting change points and a *pos_cutoff* that specifies the number of basepairs from the contig ends to considered for delinking.
-
-# In[7]:
-
-
 def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff = 100):
+    '''
+    Function to identify outlier contigs links based on change point using the following rules
+    |#                   |  Forward            |  Reverse          |
+    |:------------------:|---------------------|-------------------|
+    |        Start       | Delink predecessor  | Delink successor  |
+    |          End       | Delink successor    | Delink predecessor|
+    Input:
+        outliers: Set of outliers identified by running the previous routines. 
+        positions: A dictionary that has keys equal to the length of the span of the scaffold 
+                   and for each position we record the contigs intersecting at that coordinate
+        coordinates: A dictionary contianing the startting and ending positions along a 
+                     global frame reference for a scaffold for each contig. 
+        graph: A graph of the scaffold.
+        pos_cutoff: Outlier position on the scaffold to consider for delinking
+    Output:
+        g_ : delinked graph
+    '''
     g_ = deepcopy(graph)
     potential_contigs_removal = {}
     for o in outliers:
@@ -308,6 +348,16 @@ def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff = 10
     return g_
 
 def Return_Contig_Scaffold_Positions(coordinate_dictionary):
+    '''
+    Function to return a dictionary that has keys equal to the length of the span of the scaffold and 
+    for each position we record the contigs intersecting at that coordinate
+    Input: 
+        coordinate_dictionary: A dictionary contianing the startting and ending positions along a global 
+                               frame reference for a scaffold for each contig.
+    Output:
+        pos_dict: The forementioned dictionary that has keys that are positions and the values with
+                  the contigs at that position. 
+    '''
     pos_dict = {}
     for c in coordinate_dictionary:
         start, end = coordinate_dictionary[c]

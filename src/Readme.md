@@ -14,8 +14,8 @@ In the following section, we describe all the functions associated with **Comput
 <ol> 
     <li>This function computes the global coordinate system for the scaffold(connected component) based on the length of the contigs in the connected component and the linking information as returned by MetaCarvel. We assign (0, len(u)) where u is an "available vertex" of the subgraph. Available vertex is any vertex in the subgraph that has indegree 0. For all other vertices we assign coordinates in the global coorinate system in breadth first manner.</li>   
     <li>We also consider the contig orientations and the edge orientations in accurate estimation of coordinates. </li>
-    <li>If there multiple possible assignments we pick the one that has the largest coordinate value. We choose the greedy approaach because the number of solutions grows exponentially and the problem can be shown to be NP-Complete! </li>
-    <li>Finally, we normalize all other positions based on the least cooridnate value so that the coordinate system starts with 0.</li>
+    <li>If there multiple possible assignments we pick the one that has the largest coordinate value. We choose the greedy approaach because the number of solutions grows exponentially and the problem is NP-Hard! </li>
+    <li>Finally, we normalize all other positions based on the least cooridnate value so that the coorinate system starts with 0.</li>
     <li>The input to the program is the connected component subgraph of the assembly graph "oriented.gml" which is a result of running MetaCarvel.</li>
 </ol>
 
@@ -31,7 +31,11 @@ To compute the depth we run the Compute_Global_Coordinates and Load_Read_Coverag
 
 <h2> Change Point Detection on the Scaffold Coverage </h2>
 
-**Function**: Helper_Change_Points<br/>
+**Function**: Helper_Changepoints<br/>
+**Input**: Coverage Vector, Window_Size(Default 1500bp)<br/>
+**Output**: Change Point Statistic Vector<br/>
+
+**Function**: Helper_Changepoints_Z_Stat<br/>
 **Input**: Coverage Vector, Window_Size(Default 1500bp)<br/>
 **Output**: Change Point Statistic Vector<br/>
 
@@ -47,13 +51,13 @@ To compute changepoints along the scaffold we slide a window of default size 150
 **Input**: Change Point Statistic Vector, threshold <br/>
 **Outputs**: Outlier Indices<br/>
 
-**Function**: Filter_Neigbors<br/>
+**Function**: Filter_Neighbors<br/>
 **Input**: Outlier List, Change Point Statistic Vector and Vicinity Window Size<br/>
 **Output**: Filtered Outlier List<br/>
 
 <ol>
     <li>The following code segment is used to identify outliers in change points. To do so, we compute the peaks first.</li> 
-    <li>We don't directly identify outliers on the signal because doing so would pickup points near the peaks, these are indicators of sliding windows and not really outliers. 
+    <li>We don't directly identify outliers on the signal because doing so would pickup points near the peaks, these are indicators of sliding windows and not really outliers. Our change point statistic is computed as follows. Let $\mu_i, \sigma_{i}$ and $\mu_{i+1}, \sigma_{i+1}$ the means and deviations of the subsequent windows, out statistic is given by $$z = \frac{\mu_i - \mu_{i+1}}{\sqrt{\sigma_i^2 + \sigma_{i+1}^2}}$$</li> 
     <li>To overcome the issue, we first identify peaks. A point is a peak if a point is larger than its predecessor and successor. This is performed by the function *ID_Peaks*.</li> 
     <li>The output of this passed to *ID_outliers* which picks all those points that is gretaer than the point which is the *thresh*'s percentile. The default value of *thresh* is 98.5. </li>
     <li>The filter outliers is still a work in progress. This is aimed at removing all the outliers points that is close to one another, but this is not super important. While the mthod described in the following block is data driven we are working on improving this method by examining the underlying graph structure.</li>
@@ -106,9 +110,9 @@ In the following section we describe the code fragments available in **Binnacle_
 
 <h2> Loading Assembly Graph and Coverages </h2>
 
-**Function**: Load_Read_Coverage_and_Assembly_Graph<br/>
-**Input**: Path to the Assembly Graph, Path to the output og running genomecov<br/>
-**Output**: Return a networkx graph object and dataframe containing the output of genomecov <br/>
+**Function**: Load_Read_Coverage<br/>
+**Input**: Path to the output of running genomecov, List of nodes in the assembly graph, Output directory<br/>
+**Output**: Return a networkx graph object and dataframe containing the output of genomecov
 
 To compute the read coverages we use the *genomecov* program, part of the *bedtools* suite. We run *genomecov* with *-d* optional enabled so that we get the per base depth. The output of the prgram is utilized to compute the depth along the scaffold and this function loads the out of genomecov as a dataframe.   
 
@@ -116,8 +120,8 @@ To compute the read coverages we use the *genomecov* program, part of the *bedto
 <h2> Computing Coverages and Writing the Results </h2> 
 
 **Function**: Write_Coverage_Outputs<br/>
-**Input** : networkx object of assembly graph, dataframe of coverage, output directory to dump outputs <br/>
-**Output**: A tab seperated text file for each of the following, <br/>
+**Input** : networkx object of assembly graph, dataframe of coverage, output directory to dump outputs <br\>
+**Output**: A tab seperated text file for each of the following, 
 <ol>
     <li>Global Coordinates for the Scaffold Before Delinking with the Headers: 
         <ol><li>Scaffold id</li> 
@@ -175,7 +179,23 @@ The function imports the **Compute\_Scaffold\_Coverages\_Utility.py** and uses t
 
 The function  Write_Scaffolds calls the above tw methods to create the scaffold.fasta file. 
  * * *
- 
+
+<h2> Computing Feature Matrices </h2> 
+
+These functions compute all vs all alignment matrices and feature matrices. 
+
+**Function**: Process_Scaffold_Coverages <br/>
+**Input**: Dataframe containing the coords obtained by running binnacle and the coverage dataframe obtained by load genomecov. This dataframe could any coverage output generated for peforming all vs all alignments. <br/>
+**Output**: Returns the summary of the coverage for each scaffold in the assembly graph. <br/>
+
+**Function**:Prepare_Feature_Matrix<br/>
+**Input**: Path to the coordinate file, the summary generated by binnacle on the parent coverage outputs, flag that indicates to perform all vs all alignments, directory that contains all the all vs all alignment for the sample, Location to write the output to <br/>
+**Output**: Dataframe that contains the summary of alignments. 
+
+**Function**:Format_Outputs. Format the output based on the binning method. At the moment we support  metabat, concoct and maxbin. <br/>
+**Input**: binning method, Path to the coordinate file, the summary generated by binnacle on the parent coverage outputs, flag that indicates to perform all vs all alignments, directory that contains all the all vs all alignment for the sample, Location to write the output to<br/>
+
+ * * *
 <h2> Visualize the Results </h2>
 This is under development....
 

@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
+
+'''
+Program developed at Pop lab at the CBCB, University of Maryland by 
+Harihara Subrahmaniam Muralidharan, Nidhi Shah, Jacquelyn S Meisel. 
+'''
+
 import argparse as ap
 from Binnacle_IO_Utility import *
 from Clustering_Utility import *
@@ -26,7 +32,7 @@ graph_path = args.assembly
 coverage_path  =  args.coverage
 output_dir = args.dir
 Contigs_Path = args.contigs
-align_flag = args.all_vs_all_alignments_Flag
+align_flag = args.all_vs_all_alignments_Flag.lower()
 align_dir = args.alignments
 
 if not isdir(output_dir): mkdir(output_dir)
