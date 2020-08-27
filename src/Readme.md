@@ -150,11 +150,6 @@ To compute the read coverages we use the *genomecov* program, part of the *bedto
             <li>Location in the scaffold</li> 
             <li>coverage Value</li></ol>
     </li>
-    <li>Scaffold Level cover Summary Before Delinking with the Headers: 
-        <ol><li>Scaffold id before delinking</li> 
-            <li>Mean Coverage</li> 
-            <li>Deviation in Coverage</li></ol>
-    </li>
     <li>Scaffold Level cover Summary After Delinking with the Headers: 
         <ol><li>Scaffold id After delinking</li> 
             <li>Mean Coverage</li> 
