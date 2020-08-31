@@ -197,9 +197,4 @@ These functions compute all vs all alignment matrices and feature matrices.
 <h2> Visualize the Results </h2>
 This is under development....
 
-For questions contact hsmurali@umd.edu
-
-
-```python
-
-```
+For questions contact hsmurali@umd.edu.
