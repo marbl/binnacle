@@ -5,7 +5,12 @@ Metagenomics has revolutionized the field of microbiology, however, reconstructi
 ## Results
 For 20 complex stool samples from the human microbiome project, we ran MetaBat with contigs and MetaBat with our scaffolds. For all samples, there was an increase in the number of contigs and length of the overall bins when using scaffolds instead of contigs for binning. We also used Checkm to evaluate completeness and contamination of bins. 
 
-<img src="img/cumulative_len.png" width=450 /> <img src="img/contamination2completeness.png" width=450 />
+<td> 
+    <p align="center"><img src="img/cumulative_len.png" width=450 /></p>
+    <p align="center"><img src="img/contamination2completeness.png" width=450 /></p>
+    <p align="center"><em>Workflow to compute scaffold coverages</em><center></p>
+</td>
+ 
 
 
 ## Software Requirements:
