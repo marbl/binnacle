@@ -34,12 +34,12 @@ def Load_Read_Coverage(covpath, nodes, opdir, prefix=""):
     command = 'LANG=en_EN join '+opdir+prefix+'_Temp_Node_List.txt '+covpath+' > '+temp_cov_path
     result = subprocess.getoutput(command)
 
-    df_coverage = pd.read_csv(temp_cov_path,names = ['Contig','Loc','coverage'], 
+    df_coverage = pd.read_csv(temp_cov_path,names = ['Contig','Start','End','coverage'], 
                               sep = ' ', low_memory = False, memory_map = True, 
-                              dtype = {'Contig': str, 'Loc': 'int32', 'coverage': 'int32'},
+                              dtype = {'Contig': str, 'Start': 'int32','End':'int32', 'coverage': 'int32'},
                               engine='c')
-    df_coverage['Loc'] = df_coverage['Loc']-1
-    df_coverage = df_coverage.sort_values(by = ['Contig','Loc'])
+    #df_coverage['Loc'] = df_coverage['Loc']-1
+    df_coverage = df_coverage.sort_values(by = ['Contig','Start'])
     df_coverage = df_coverage.set_index('Contig')
     remove(opdir+prefix+'_Temp_Node_List.txt')
     remove(temp_cov_path)

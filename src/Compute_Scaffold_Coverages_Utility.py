@@ -154,12 +154,19 @@ def Compute_Coverage(df_coverage, coords):
     coverage = np.zeros(max_coord+1)
     try:
         for c in top_sort:
-            contig_depth = np.array(df_coverage.loc[c]['coverage'])
             s,e = coords[c]
+            cov_coords = df_coverage.loc[c]
+            loc = list(zip(cov_coords['Start'].tolist(), cov_coords['End'].tolist()))
+            cov_contig = cov_coords['coverage'].tolist()
+            contig_depth = np.zeros(np.abs(s-e))
+            for i in range(len(loc)):
+                l = loc[i]
+                contig_depth[l[0]:l[1]] = cov_contig[i]
             if (s > e): coverage[s:e:-1] += contig_depth
             else: coverage[s:e] += contig_depth
             assert np.abs(s-e) == len(contig_depth), top_sort
-    except Exception:
+    except Exception as e:
+        print(e)
         print('Did you sort the coverage files by contig ids before running binnacle???? Exiting with error...')
     return coverage
 
