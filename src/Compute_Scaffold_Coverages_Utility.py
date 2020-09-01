@@ -170,7 +170,7 @@ def Compute_Coverage(df_coverage, coords):
         print('Did you sort the coverage files by contig ids before running binnacle???? Exiting with error...')
     return coverage
 
-def Helper_Changepoints_Z_Stat(cov_vec, window_size=1500):
+def Helper_Changepoints_Z_Stat(cov_vec, window_size):
     '''
     Function to compute outliers in coverage signals. We use the two sample two sample Z-tests. 
     The z-statistic is calculated by z = \frac{\mu_1-\mu_2}{\sqrt{\sigma_1^2+\sigma_2^2}}
@@ -193,7 +193,7 @@ def Helper_Changepoints_Z_Stat(cov_vec, window_size=1500):
     cpts[indices_non_zero] = test_stat
     return cpts
 
-def Helper_Changepoints(cov_vec, window_size = 1500):
+def Helper_Changepoints(cov_vec, window_size):
     '''
     Function to compute outliers in coverage signals. We use our own test statistic. 
     The test statistic is calculated by p = \frac{max{\mu_1,\mu_2}}{min{\mu_1,\mu_2}}
@@ -231,25 +231,7 @@ def ID_outliers(change_point_vec, thresh):
     indices = np.where(((change_point_vec >= cutoff_upper) | (change_point_vec <= cutoff_lower)))
     return indices[0]
 
-def ID_Peaks(change_point_vec, thresh=99):
-    '''
-    Function to identify peaks in the outlier list. Simple thresholding might result in identifying points 
-    that are close by which is an artifact of sliding window. The function is not necessarily used at the moment. 
-    Input:
-        change_point_vec: A vector of changepoints.
-        thresh: Default threshold for identifying outliers is the 99th percentile. 
-    Output:
-        Peak_Indices: Returns the filtered set of outliers. 
-    '''
-    left_shift, curr_vec, right_shift = change_point_vec[0:-2], change_point_vec[1:-1], change_point_vec[2:]
-    left_diff, right_diff = curr_vec - left_shift, curr_vec - right_shift
-    Peak_Indices = np.array(list(set(np.where(left_diff >= 0)[0]).intersection(set(np.where(right_diff >= 0)[0]))))+1
-    Peak_Indices = np.sort(list(set(Peak_Indices) - set(np.where(change_point_vec <= 0)[0])))
-    Peak_Values = change_point_vec[Peak_Indices]
-    outlier_peaks = ID_outliers(Peak_Values, thresh)
-    return Peak_Indices[outlier_peaks]
-
-def Filter_Neighbors(outlier_list, changepoints, window_size = 100):
+def Filter_Neighbors(outlier_list, changepoints, window_size):
     '''
     Function to remove multiple outliers around a peak. 
     Input:
@@ -280,7 +262,7 @@ def Filter_Neighbors(outlier_list, changepoints, window_size = 100):
     outlier_set.sort()
     return outlier_set
 
-def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff = 100):
+def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff):
     '''
     Function to identify outlier contigs links based on change point using the following rules
     |#                   |  Forward            |  Reverse          |

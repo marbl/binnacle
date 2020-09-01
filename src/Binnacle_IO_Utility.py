@@ -37,16 +37,14 @@ def Load_Read_Coverage(covpath, nodes, opdir, prefix=""):
     df_coverage = pd.read_csv(temp_cov_path,names = ['Contig','Start','End','coverage'], 
                               sep = ' ', low_memory = False, memory_map = True, 
                               dtype = {'Contig': str, 'Start': 'int32','End':'int32', 'coverage': 'int32'},
-                              engine='c')
-    #df_coverage['Loc'] = df_coverage['Loc']-1
-    df_coverage = df_coverage.sort_values(by = ['Contig','Start'])
-    df_coverage = df_coverage.set_index('Contig')
+                              engine='c', index_col = 'Contig')
     remove(opdir+prefix+'_Temp_Node_List.txt')
     remove(temp_cov_path)
     print(df_coverage.info(), '\n')
     return df_coverage
 
-def Write_Coverage_Outputs(graph,df_coverage, outdir, prefix = ""):
+def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_thresh=99, 
+                           neighbors_outlier_filter=100, poscutoff=100,prefix = ""):
     '''
     Wrapper function to compute coverages and write outputs to. 
     Input:
@@ -104,11 +102,11 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, prefix = ""):
             flag =  True
 
         if len(nodes) > 1:
-            mean_ratios = Helper_Changepoints_Z_Stat(deepcopy(coverage))
-            outliers = ID_outliers(mean_ratios, 99)
-            outliers = Filter_Neighbors(outliers, mean_ratios)
+            mean_ratios = Helper_Changepoints_Z_Stat(deepcopy(coverage), window_size = window_size)
+            outliers = ID_outliers(mean_ratios, thresh=outlier_thresh)
+            outliers = Filter_Neighbors(outliers, mean_ratios, window_size=neighbors_outlier_filter)
             Pos_Dict = Return_Contig_Scaffold_Positions(coords)
-            g_removed = Get_Outlier_Contigs(outliers, Pos_Dict, coords, test, 100)
+            g_removed = Get_Outlier_Contigs(outliers, Pos_Dict, coords, test, pos_cutoff=poscutoff)
             
             mu, dev, span = round(np.mean(coverage),1), round(np.std(coverage),1), len(coverage)
             #d_before_dlink = bytes(str(cc_before_delinking) + '\t' + str(span) + '\t' + str(mu) + '\t' + str(dev) + '\n', encoding = 'utf-8')
