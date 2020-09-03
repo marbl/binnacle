@@ -22,13 +22,13 @@ def Process_Scaffold_Coverages(df_coverages, df_coords):
     counter['Counter'] = 1
     counter = counter.groupby('Scaffold').sum()
     counter = dict(zip(list(counter.index), list(counter['Counter'])))
-    df_coords['Coords'] = list(zip(df_coords['Start'], df_coords['End']))
+    df_coords['Coords'] = list(zip(df_coords['Start'].tolist(), df_coords['End'].tolist()))
     mu_list, sigma_list, spanlist = [], [], []
 
     for scaffold in np.unique(scaffolds):
         df_coords_filtered = df_coords.loc[scaffold]
         if counter[scaffold] > 1:
-            coords = dict(zip(df_coords_filtered['Contig'], df_coords_filtered['Coords']))
+            coords = dict(zip(df_coords_filtered['Contig'].tolist(), df_coords_filtered['Coords'].tolist()))
             max_coords = max(df_coords_filtered['Coords'].max())
         else: 
             coords = {df_coords_filtered['Contig']:df_coords_filtered['Coords']}

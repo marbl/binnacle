@@ -152,12 +152,14 @@ def Compute_Coverage(df_coverage, coords):
         max_v = max(coords[c])
         if max_v >= max_coord: max_coord = max_v
     coverage = np.zeros(max_coord+1)
+    cov_ctr = df_coverage.reset_index().groupby(['Contig']).count()
+    cov_ctr = dict(zip(cov_ctr.index.tolist(), cov_ctr['Start'].tolist()))
     try:
         for c in top_sort:
             s,e = coords[c]
             cov_coords = df_coverage.loc[c]
-            loc = list(zip(cov_coords['Start'].tolist(), cov_coords['End'].tolist()))
-            cov_contig = cov_coords['coverage'].tolist()
+            if cov_ctr[c] > 1: loc, cov_contig = list(zip(cov_coords['Start'].tolist(), cov_coords['End'].tolist())),cov_coords['coverage'].tolist()
+            else:  loc, cov_contig = list(zip([cov_coords['Start']], [cov_coords['End']])), [cov_coords['coverage']]
             contig_depth = np.zeros(np.abs(s-e))
             for i in range(len(loc)):
                 l = loc[i]
@@ -167,7 +169,7 @@ def Compute_Coverage(df_coverage, coords):
             assert np.abs(s-e) == len(contig_depth), top_sort
     except Exception as e:
         print(e)
-        print('Did you sort the coverage files by contig ids before running binnacle???? Exiting with error...')
+        print('Did you sort the coverage files by contig ids before running binnacle???? Exiting with error...\n')
     return coverage
 
 def Helper_Changepoints_Z_Stat(cov_vec, window_size):
