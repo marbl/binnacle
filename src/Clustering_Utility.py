@@ -48,40 +48,6 @@ def Process_Scaffold_Coverages(df_coverages, df_coords):
     print(df_summary.head())
     return df_summary
 
-'''def Prepare_Feature_Matrix(parent_coords, parent_summary, align_flag, align_dir, output_dir):
-    Function to prepare all vs all alignments feature matrix for various binning algorithm
-    Input:
-        Parent_coords: Coordinate file for the scaffolds
-        parent_summary: The path to the txt file containing the summary information by running binnacle on the original sample.
-        align_flag: A flag that specifes whether to peform all vs all alignments
-        align_dir: Directory that contains the output of running genomecov -d on the bed files obtaining mapping reads of all samples to contigs of all samples
-        output_dir: Location where the putputs of binnacle is written to. 
-    Output:
-        df_summary: A dataframe containg the feature matrix 
-    df_coords = pd.read_csv(parent_coords, names = ['cc_aft_dlink', 'cc_bef_dlink', 'Contig', 'Start', 'End'], 
-                            sep = '\t', index_col = ['cc_aft_dlink'])
-    df_coords['Contig'] = df_coords['Contig'].astype(str)
-    node_list = df_coords['Contig'].tolist()
-    df_summary = pd.read_csv(parent_summary, names = ['Scaffold_id', 'Span', 'Mu_0', 'Sigma_0'], sep='\t', index_col = 'Scaffold_id')
-    if align_flag.lower() == "false":
-        return df_summary
-    ctr = 1
-    if len(align_dir) == 0:
-        print('Alignment Files Not Found')
-        return df_summary
-
-    align_files = listdir(align_dir)
-    for f in align_files:
-        if (f[0].isalpha() or f[0].isnumeric()):
-            filepath = align_dir+f
-            df_coverage = Load_Read_Coverage(filepath, node_list, output_dir) 
-            print('Loaded Coverage Summary....')
-            df_summary_arg = Process_Scaffold_Coverages(df_coverage, df_coords)
-            df_summary_arg = df_summary_arg.rename(columns={'Mu':'Mu_'+str(ctr), 'Sigma':'Sigma_'+str(ctr)})
-            df_summary = df_summary.join(df_summary_arg)
-            ctr += 1
-    return df_summary'''
-
 def Format_Outputs(summary_dir, binning_method):
     '''
     Function to format outputs to the binning method specified. 
@@ -98,7 +64,7 @@ def Format_Outputs(summary_dir, binning_method):
     df_summary = pd.DataFrame()
     ctr = 0
     for i in range(0, len(files)):
-        if 'Summary.txt' in files[i]:
+        if 'Summary.txt' in files[i] and files[i][0] != '.':
             print(files[i])
             col_prefix = files[i].replace("_Summary.txt","")
             df = pd.read_csv(summary_dir+files[i], names = ['Scaffold','Span', col_prefix+'_Mu', col_prefix+'_Sigma'],
