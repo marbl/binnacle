@@ -53,11 +53,9 @@ def Format_Outputs(summary_dir, binning_method):
     Function to format outputs to the binning method specified. 
     Input:
         binnning_method: Choice of binning method (metabat, concoct, maxbin)
-        coords_path: Coordinate file for the scaffolds
         summary_path: The path to the txt file containing the summary information by running binnacle on the original sample.
-        align_flag: A flag that specifes whether to peform all vs all alignments
-        align_dir: Directory that contains the output of running genomecov -d on the bed files obtaining mapping reads of all samples to contigs of all samples
-        output_dir: Location where the putputs of binnacle is written to.
+    Output:
+        df_summary: Collated summary file
     '''
     files = listdir(summary_dir)
     files.sort()
@@ -78,10 +76,7 @@ def Format_Outputs(summary_dir, binning_method):
             ctr += 1
             df_summary = df_summary.join(df, how = 'outer')
     df_mu = df_summary.filter(regex='_Mu')
-    if binning_method.lower().startswith('metabat'):
-        df_summary['Avg_Depth'] = df_mu.mean(axis=1)
-    elif binning_method.lower().startswith('maxbin') or binning_method.lower().startswith('concoct'):
-        df_summary = df_mu
-    else:
-        del df_summary['Span'], df_summary['Avg_Depth']
+    if binning_method.lower().startswith('metabat'): df_summary['Avg_Depth'] = df_mu.mean(axis=1)
+    elif binning_method.lower().startswith('maxbin') or binning_method.lower().startswith('concoct'): df_summary = df_mu
+    else: del df_summary['Span'], df_summary['Avg_Depth']
     return df_summary

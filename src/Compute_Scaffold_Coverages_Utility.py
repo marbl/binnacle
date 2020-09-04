@@ -313,25 +313,21 @@ def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff):
         p = potential_contigs_removal[c]
         fwd, start = p[2], p[3]       
         if(fwd == True) and (start == True): 
-            #print('Removing',c,'\'s Predecessors')
             predecessors = list(g_.predecessors(str(c)))
             if len(predecessors) > 0:
                 edges = [(pred,c) for pred in predecessors]
                 g_.remove_edges_from(edges)
         if(fwd == False) and (start == True): 
-            #print('Removing',c,'\'s Successors')
             successors = list(g_.successors(str(c)))
             if len(successors) > 0:
                 edges = [(c,succ) for succ in successors]
                 g_.remove_edges_from(edges)
         if(fwd == False) and (start == False): 
-            #print('Removing',c,'\'s Predecessors')
             predecessors = list(g_.predecessors(str(c)))
             if len(predecessors) > 0:
                 edges = [(pred,c) for pred in predecessors]
                 g_.remove_edges_from(edges)
         if(fwd == True) and (start == False): 
-            #print('Removing',c,'\'s Successors')
             successors = list(g_.successors(str(c)))
             if len(successors) > 0:
                 edges = [(c,succ) for succ in successors]
@@ -340,7 +336,7 @@ def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff):
 
 def Return_Contig_Scaffold_Positions(coordinate_dictionary):
     '''
-    Function to return a dictionary that has keys equal to the length of the span of the scaffold and 
+    Function to return a dictionary that has keys equal to the span of the scaffold and 
     for each position we record the contigs intersecting at that coordinate
     Input: 
         coordinate_dictionary: A dictionary contianing the startting and ending positions along a global 

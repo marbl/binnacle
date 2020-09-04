@@ -26,7 +26,6 @@ df_summary = Format_Outputs(summary_dir, summary_method)
 print(df_summary.head())
 
 if summary_method.lower().startswith('metabat') or summary_method.lower().startswith('binnacle'):
-    print('Hello')
     df_summary.to_csv(summary_dir+'Feature-Matrix-'+summary_method+'.txt', sep = '\t')
 else:
     df_summary.to_csv(summary_dir+'Feature-Matrix-'+summary_method+'.txt', sep = '\t', header = False)

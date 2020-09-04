@@ -47,7 +47,7 @@ if coords_path == "":
     if graph_path == "":
         print('Please specify the path to the oriented.gml produced by running metacarvel...')
         if Contigs_Path == "":
-            print('Please specify the path to the contigs.fasat...')
+            print('Please specify the path to the contigs.fasta...')
     else:           
         G = nx.read_gml(graph_path)
         node_list = list(G.nodes())
