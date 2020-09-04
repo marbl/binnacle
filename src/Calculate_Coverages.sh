@@ -7,17 +7,17 @@
 #SBATCH --time=0-18:00:00
 #SBATCH --qos=throughput
 #SBATCH --mem=36gb
-#SBATCH --array=2-5
+#SBATCH --array=1-3
 
 source /cbcbhomes/hsmurali/binnacle/bin/activate
-sample=`head -n ${SLURM_ARRAY_TASK_ID} samples_2.txt | tail -n 1`
+abundance_path=/fs/cbcb-lab/mpop/projects/refining_bins_with_assembly_graphs/all_vs_all_alignments/Mapping_Bed_Files/
+ls ${abundance_path} > samples.txt
+s=`head -n ${SLURM_ARRAY_TASK_ID} samples.txt | tail -n 1`
+sample=${s:0:9}
+echo ${s}
 echo ${sample}
+coverage_path=${abundance_path}${s}
+output_path=/fs/cbcb-scratch/hsmurali/binnacle/Binnacle_Scaffold_Coverages/${sample}/
+coords_path=${output_path}Coords_After_Delinking.txt
 
-graphpath=/fs/cbcb-lab/mpop/MetaCarvel_paper/hmp_scaffolds/stool/${sample}/${sample}_scaffolds/oriented.gml
-coverage_path=/fs/cbcb-scratch/hsmurali/binnacle/all_vs_all_alignments/genomecov_d/${sample}_${sample}.txt
-output_path=/fs/cbcb-scratch/hsmurali/binnacle/all_vs_all_alignments/Binnacle_Scaffold_Coverages/${sample}/
-contigs_path=/fs/cbcb-lab/mpop/MetaCarvel_paper/hmp_scaffolds/stool/${sample}/${sample}.fna
-alignpath=/fs/cbcb-scratch/hsmurali/binnacle/all_vs_all_alignments/genomecov_d/${sample}/
-
-time python Calculate_Coverages.py -g ${graphpath} -a ${coverage_path} -d ${output_path} -c ${contigs_path} -b binnacle -A true -M ${alignpath}
-
+time python Estimate_Abundances.py -o ${coords_path} -a ${coverage_path} -d ${output_path} 
