@@ -51,18 +51,20 @@ if coords_path == "":
     else:           
         G = nx.read_gml(graph_path)
         node_list = list(G.nodes())
-        df_coverage = Load_Read_Coverage(coverage_path, node_list, output_dir, prefix) 
+        df_coverage, df_not_found_summary = Load_Read_Coverage(coverage_path, node_list, output_dir, prefix) 
         print('Loaded Coverage and Assembly Graph')
         Write_Coverage_Outputs(G, df_coverage, output_dir, w, t, n, p, prefix)
+        Append_Removed_Contigs(output_dir, df_not_found_summary, prefix)
         Coords_Path = output_dir+'Coords_After_Delinking.txt'
         op_path = output_dir+'Scaffolds.fasta'
         Write_Scaffolds(Contigs_Path, Coords_Path, op_path)
 else:
-    df_coords = pd.read_csv(coords_path, names = ['cc_aft_dlink', 'cc_bef_dlink', 'Contig', 'Start', 'End'], 
-                            sep = '\t', index_col = ['cc_aft_dlink'])
+    df_coords = pd.read_csv(coords_path, names = ['cc_aft_dlink', 'cc_bef_dlink', 'Contig', 'Start', 'End', 'Ingraph'], 
+                            sep = '\t')
     df_coords['Contig'] = df_coords['Contig'].astype(str)
-    node_list = df_coords['Contig'].tolist()
-    df_coverage = Load_Read_Coverage(coverage_path, node_list, output_dir, prefix) 
-    df_summary = Process_Scaffold_Coverages(df_coverage, df_coords)
+    df_coords_filtered = df_coords[df_coords['Ingraph'] == 1]
+    node_list = df_coords_filtered['Contig'].tolist()
+    df_coverage, df_not_found_summary = Load_Read_Coverage(coverage_path, node_list, output_dir, prefix) 
+    df_summary = Process_Scaffold_Coverages(df_coverage, df_coords_filtered, df_not_found_summary)
     df_summary.to_csv(output_dir + prefix+'_Summary.txt', sep = '\t', header = False)
     print('Written Coverages')

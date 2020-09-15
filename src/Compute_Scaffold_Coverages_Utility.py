@@ -11,6 +11,28 @@ import pandas as pd
 import networkx as nx
 from copy import deepcopy
 
+def Mean(group):
+    freq = group['Length'].tolist()
+    val = group['Coverage'].tolist()
+    vec = np.repeat(val, freq)
+    return round(np.mean(vec),1)
+
+def Deviation(group):
+    freq = group['Length'].tolist()
+    val = group['Coverage'].tolist()
+    vec = np.repeat(val, freq)
+    return round(np.std(vec),1)
+
+def Summarize_Coverages(df):
+    df['Length'] = df['End']-df['Start']
+    df_length = df[['ContigID', 'End']].groupby('ContigID').max().rename(columns = {'End':'Length'})
+    df_op = pd.DataFrame()
+    df_op['Mean'] = df.groupby('ContigID').apply(Mean)
+    df_op['Std'] = df.groupby('ContigID').apply(Deviation)
+    df_op = df_op.join(df_length)
+    df_op = df_op[['Length','Mean','Std']]
+    return df_op
+
 def Return_Starting_Point(subgraph):
     '''
     Function to return the starting point to assign coordinates on the global frame of reference. 

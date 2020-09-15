@@ -8,7 +8,7 @@ Harihara Subrahmaniam Muralidharan, Nidhi Shah, Jacquelyn S Meisel.
 
 from Binnacle_IO_Utility import *
 
-def Process_Scaffold_Coverages(df_coverages, df_coords):
+def Process_Scaffold_Coverages(df_coverages, df_coords, df_not_found):
     '''
     Function to generate the features for all vs all alignments. 
     Input:
@@ -17,7 +17,8 @@ def Process_Scaffold_Coverages(df_coverages, df_coords):
     Output:
         df_summary: Dataframe object with the mean and deviation for the scaffold. 
     '''
-    scaffolds = list(df_coords.index)
+    scaffolds = df_coords['cc_aft_dlink'].tolist()
+    df_coords = df_coords.set_index('cc_aft_dlink')
     counter = pd.DataFrame(data = {'Scaffold':scaffolds})
     counter['Counter'] = 1
     counter = counter.groupby('Scaffold').sum()
@@ -44,6 +45,10 @@ def Process_Scaffold_Coverages(df_coverages, df_coords):
 
     df_summary = pd.DataFrame(data = {'Scaffold_id':np.unique(scaffolds), 'Span':spanlist, 
                                       'Mu':mu_list, 'Sigma':sigma_list})
+    df_not_found['Scaffold_id'] = list(range(1, len(df_not_found)+1))
+    df_not_found['Scaffold_id'] += len(mu_list)
+    df_not_found = df_not_found.rename(columns = {'Length':'Span', 'Mean':'Mu', 'Std':'Sigma'})
+    df_summary = pd.concat([df_summary, df_not_found[['Scaffold_id','Span','Mu', 'Sigma']]])
     df_summary = df_summary.set_index('Scaffold_id')
     print(df_summary.head())
     return df_summary

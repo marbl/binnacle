@@ -34,14 +34,27 @@ def Load_Read_Coverage(covpath, nodes, opdir, prefix=""):
     command = 'LANG=en_EN join '+opdir+prefix+'_Temp_Node_List.txt '+covpath+' > '+temp_cov_path
     result = subprocess.getoutput(command)
 
+    temp_not_found_path = opdir+prefix+'_Temp_Not_Found.txt'
+    command = 'awk \'NR==FNR{c[$1]++;next};c[$1] == 0\' ' +  opdir+prefix+'_Temp_Node_List.txt '+covpath+ ' > '+temp_not_found_path
+    result = subprocess.getoutput(command)
+
+    df_not_found = pd.read_csv(temp_not_found_path, sep = '\t', names = ['ContigID','Start','End','Coverage'],
+                               low_memory = False, memory_map = True, engine='c',
+                               dtype = {'Contig': str, 'Start': 'int32','End':'int32', 'coverage': 'int32'})
+    df_not_found_summary = Summarize_Coverages(df_not_found)
+
     df_coverage = pd.read_csv(temp_cov_path,names = ['Contig','Start','End','coverage'], 
                               sep = ' ', low_memory = False, memory_map = True, 
                               dtype = {'Contig': str, 'Start': 'int32','End':'int32', 'coverage': 'int32'},
                               engine='c', index_col = 'Contig')
     remove(opdir+prefix+'_Temp_Node_List.txt')
     remove(temp_cov_path)
+    remove(temp_not_found_path)
+
     print(df_coverage.info(), '\n')
-    return df_coverage
+    print(df_not_found_summary.info(), '\n')
+
+    return df_coverage, df_not_found_summary
 
 def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_thresh=99, 
                            neighbors_outlier_filter=100, poscutoff=100,prefix = ""):
@@ -168,6 +181,45 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
     
     print('Done.....')
 
+def Append_Removed_Contigs(opdir, df_not_found, prefix):
+    df_coords_before_delinking = pd.read_csv(opdir+'Coords_Before_Delinking.txt', sep = '\t',
+                                             names = ['CC_Before_Delinking','Contig','Start','End'])
+    max_cc_before_delinking = df_coords_before_delinking['CC_Before_Delinking'].max()
+    df_coords_after_delinking = pd.read_csv(opdir+'Coords_After_Delinking.txt', sep = '\t',
+                                             names = ['CC_After_Delinking','CC_Before_Delinking','Contig','Start','End'])
+    df_coords_after_delinking['Ingraph'] = 1
+    max_cc_before_delinking = df_coords_before_delinking['CC_Before_Delinking'].max()
+    max_cc_after_delinking = df_coords_after_delinking['CC_After_Delinking'].max()
+
+    df_not_found = df_not_found.reset_index()
+    df_not_found = df_not_found.rename(columns = {'ContigID':'Contig'})
+    df_not_found['CC_Before_Delinking'] = list(range(1, len(df_not_found)+1))
+    df_not_found['CC_Before_Delinking'] += max_cc_before_delinking
+    df_not_found['CC_After_Delinking'] = list(range(1, len(df_not_found)+1))
+    df_not_found['CC_After_Delinking'] += max_cc_after_delinking
+    df_not_found['Ingraph'] = 0
+    df_not_found['Start'] = 0
+    df_not_found['End'] = df_not_found['Length'].tolist()
+    print(df_not_found.head())
+    
+    df_coords_before_delinking = pd.concat([df_coords_before_delinking, df_not_found[['CC_Before_Delinking','Contig','Start','End']]])
+    df_coords_after_delinking = pd.concat([df_coords_after_delinking, df_not_found[['CC_After_Delinking','CC_Before_Delinking','Contig','Start','End', 'Ingraph']]])
+    print(df_coords_after_delinking.head())
+    
+
+    df_coords_before_delinking.set_index('CC_Before_Delinking', inplace = True)
+    df_coords_after_delinking.set_index('CC_After_Delinking', inplace = True)
+
+    df_coords_before_delinking.to_csv(opdir+'Coords_Before_Delinking.txt', sep = '\t', header = False)
+    df_coords_after_delinking.to_csv(opdir+'Coords_After_Delinking.txt', sep = '\t', header = False)
+
+
+    df_summary = pd.read_csv(opdir+prefix+'_Summary.txt', sep = '\t', names = ['CC_After_Delinking','Length', 'Mean', 'Std'])
+    df_summary = pd.concat([df_summary, df_not_found[['CC_After_Delinking','Length','Mean','Std']]])
+    df_summary.set_index('CC_After_Delinking', inplace = True)
+    df_summary.to_csv(opdir+prefix+'_Summary.txt', sep = '\t', header = False)
+    
+    
 def Load_FASTA_File(input_file):
     '''
     Function to load the fasta file of the contigs
@@ -191,7 +243,7 @@ def Get_Contigs_in_Scaffolds(input_file):
         df_coords_dictionary: A dictionary whose keys are scaffold id and the values are a list of contigs in the scaffold. 
     '''
     df_coords = pd.read_csv(input_file, names = ['CC_after_dlnk', 'CC_before_dlnk', 
-                                                  'Contig', 'Start', 'End'], sep = '\t')
+                                                  'Contig', 'Start', 'End', 'Ingraph'], sep = '\t')
     df_coords = df_coords[['CC_after_dlnk','Contig']]
     df_coords = df_coords.groupby('CC_after_dlnk')['Contig'].apply(list)
     return (df_coords.to_dict())
