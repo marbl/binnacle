@@ -126,7 +126,7 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
             #wb_summary_before_delinking.write(d_before_dlink)
 
             delinked_conn_comps = list(nx.weakly_connected_components(g_removed))
-            print('Debug---->', cc_before_delinking, len(nodes), len(delinked_conn_comps))
+            print('Debug---->', cc_before_delinking, len(nodes), len(test.edges()), len(delinked_conn_comps))
 
             if len(delinked_conn_comps) == 1:
                 cc_after_delinking += 1
@@ -204,15 +204,14 @@ def Append_Removed_Contigs(opdir, df_not_found, prefix):
     
     df_coords_before_delinking = pd.concat([df_coords_before_delinking, df_not_found[['CC_Before_Delinking','Contig','Start','End']]])
     df_coords_after_delinking = pd.concat([df_coords_after_delinking, df_not_found[['CC_After_Delinking','CC_Before_Delinking','Contig','Start','End', 'Ingraph']]])
-    print(df_coords_after_delinking.head())
+    df_coords_before_delinking['Length'] = np.abs(df_coords_before_delinking['Start']-df_coords_before_delinking['End'])
+    df_coords_after_delinking['Length'] = np.abs(df_coords_after_delinking['Start']-df_coords_after_delinking['End'])
     
-
     df_coords_before_delinking.set_index('CC_Before_Delinking', inplace = True)
     df_coords_after_delinking.set_index('CC_After_Delinking', inplace = True)
 
     df_coords_before_delinking.to_csv(opdir+'Coords_Before_Delinking.txt', sep = '\t', header = False)
     df_coords_after_delinking.to_csv(opdir+'Coords_After_Delinking.txt', sep = '\t', header = False)
-
 
     df_summary = pd.read_csv(opdir+prefix+'_Summary.txt', sep = '\t', names = ['CC_After_Delinking','Length', 'Mean', 'Std'])
     df_summary = pd.concat([df_summary, df_not_found[['CC_After_Delinking','Length','Mean','Std']]])
@@ -243,7 +242,7 @@ def Get_Contigs_in_Scaffolds(input_file):
         df_coords_dictionary: A dictionary whose keys are scaffold id and the values are a list of contigs in the scaffold. 
     '''
     df_coords = pd.read_csv(input_file, names = ['CC_after_dlnk', 'CC_before_dlnk', 
-                                                  'Contig', 'Start', 'End', 'Ingraph'], sep = '\t')
+                                                  'Contig', 'Start', 'End', 'Ingraph', 'Length'], sep = '\t')
     df_coords = df_coords[['CC_after_dlnk','Contig']]
     df_coords = df_coords.groupby('CC_after_dlnk')['Contig'].apply(list)
     return (df_coords.to_dict())

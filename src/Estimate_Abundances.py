@@ -59,7 +59,7 @@ if coords_path == "":
         op_path = output_dir+'Scaffolds.fasta'
         Write_Scaffolds(Contigs_Path, Coords_Path, op_path)
 else:
-    df_coords = pd.read_csv(coords_path, names = ['cc_aft_dlink', 'cc_bef_dlink', 'Contig', 'Start', 'End', 'Ingraph'], 
+    df_coords = pd.read_csv(coords_path, names = ['cc_aft_dlink', 'cc_bef_dlink', 'Contig', 'Start', 'End', 'Ingraph', 'Length'], 
                             sep = '\t')
     df_coords['Contig'] = df_coords['Contig'].astype(str)
     df_coords_filtered = df_coords[df_coords['Ingraph'] == 1]
