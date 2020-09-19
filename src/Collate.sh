@@ -7,10 +7,10 @@
 #SBATCH --time=0-18:00:00
 #SBATCH --qos=throughput
 #SBATCH --mem=36gb
-#SBATCH --array=1-20
+#SBATCH --array=1-18
 
 source /cbcbhomes/hsmurali/binnacle/bin/activate
-op_dir_path=/fs/cbcb-scratch/hsmurali/binnacle/Binnacle_Scaffold_Coverages/
+op_dir_path=/fs/cbcb-scratch/hsmurali/binnacle/Sharon-Data/Summarize_Linear_Scaffold_Coverage/
 ls -D ${op_dir_path} > samples.txt
 s=`head -n ${SLURM_ARRAY_TASK_ID} samples.txt | tail -n 1`
 echo ${s}

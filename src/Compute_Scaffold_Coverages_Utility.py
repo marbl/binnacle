@@ -191,6 +191,7 @@ def Compute_Coverage(df_coverage, coords):
             assert np.abs(s-e) == len(contig_depth), top_sort
     except Exception as e:
         print(e)
+        print('Here')
         print('Did you sort the coverage files by contig ids before running binnacle???? Exiting with error...\n')
     return coverage
 
@@ -252,7 +253,7 @@ def ID_outliers(change_point_vec, thresh):
     '''
     cutoff_upper = np.percentile(change_point_vec, thresh)
     cutoff_lower = np.percentile(change_point_vec, 100-thresh)
-    indices = np.where(((change_point_vec >= cutoff_upper) | (change_point_vec <= cutoff_lower)))
+    indices = np.where(((change_point_vec >= cutoff_upper) | (change_point_vec <= cutoff_lower))&(change_point_vec > 0))
     return indices[0]
 
 def Filter_Neighbors(outlier_list, changepoints, window_size):
@@ -310,7 +311,9 @@ def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff):
         try:
             contigs_intersecting = positions[o]
         except KeyError:
-            print('KeyError', o, np.max(positions.keys()))
+            print('Here')
+            #print(positions)
+            print('KeyError', o, np.max(list(positions.keys())))
             continue
         closest_contig, closest_contig_val = '',np.inf
         forward, start = True, True
@@ -368,11 +371,13 @@ def Return_Contig_Scaffold_Positions(coordinate_dictionary):
                   the contigs at that position. 
     '''
     pos_dict = {}
-    for c in coordinate_dictionary:
+    for c in coordinate_dictionary.keys():
         start, end = coordinate_dictionary[c]
         if start > end: a,b = end, start
         else: a,b = start,end
         for i in range(a, b+1):
-            try: pos_dict[i].append(c)
-            except KeyError: pos_dict[i] = [c]
+            try: 
+                pos_dict[i].append(c)
+            except KeyError: 
+                pos_dict[i] = [c]
     return pos_dict

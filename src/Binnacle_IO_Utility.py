@@ -126,7 +126,7 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
             #wb_summary_before_delinking.write(d_before_dlink)
 
             delinked_conn_comps = list(nx.weakly_connected_components(g_removed))
-            print('Debug---->', cc_before_delinking, len(nodes), len(test.edges()), len(delinked_conn_comps))
+            print('Debug---->', cc_before_delinking, len(nodes), len(test.edges()), len(delinked_conn_comps), np.max(list(Pos_Dict.keys())))
 
             if len(delinked_conn_comps) == 1:
                 cc_after_delinking += 1
