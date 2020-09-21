@@ -24,31 +24,33 @@ def Process_Scaffold_Coverages(df_coverages, df_coords, df_not_found):
     counter = counter.groupby('Scaffold').sum()
     counter = dict(zip(list(counter.index), list(counter['Counter'])))
     df_coords['Coords'] = list(zip(df_coords['Start'].tolist(), df_coords['End'].tolist()))
-    mu_list, sigma_list, spanlist = [], [], []
+    mu_list, sigma_list, spanlist, lengthlist = [], [], [], []
 
     for scaffold in np.unique(scaffolds):
         df_coords_filtered = df_coords.loc[scaffold]
         if counter[scaffold] > 1:
             coords = dict(zip(df_coords_filtered['Contig'].tolist(), df_coords_filtered['Coords'].tolist()))
-            max_coords = max(df_coords_filtered['Coords'].max())
         else: 
             coords = {df_coords_filtered['Contig']:df_coords_filtered['Coords']}
-            max_coords  = df_coords_filtered[['Start','End']].max()
 
         contigs = list(coords.keys())
         df_coverages_scaffold = df_coverages.loc[contigs]
         coverages = Compute_Coverage(df_coverages_scaffold, coords)
         mean, std = round(np.mean(coverages),1), round(np.std(coverages), 1)
+        length = np.sum(np.abs(df_coords_filtered['Start'] - df_coords_filtered['End']))
+
         mu_list.append(mean)
         sigma_list.append(std)
-        spanlist.append(max_coords)
+        spanlist.append(len(coverages))
+        lengthlist.append(length)
 
-    df_summary = pd.DataFrame(data = {'Scaffold_id':np.unique(scaffolds), 'Span':spanlist, 
-                                      'Mu':mu_list, 'Sigma':sigma_list})
+    df_summary = pd.DataFrame(data = {'Scaffold_id':np.unique(scaffolds), 'Length':lengthlist, 
+                                      'Span':spanlist, 'Mu':mu_list, 'Sigma':sigma_list})
     df_not_found['Scaffold_id'] = list(range(1, len(df_not_found)+1))
     df_not_found['Scaffold_id'] += len(mu_list)
-    df_not_found = df_not_found.rename(columns = {'Length':'Span', 'Mean':'Mu', 'Std':'Sigma'})
-    df_summary = pd.concat([df_summary, df_not_found[['Scaffold_id','Span','Mu', 'Sigma']]])
+    df_not_found = df_not_found.rename(columns = {'Mean':'Mu', 'Std':'Sigma'})
+    df_not_found['Span'] = df_not_found['Length']
+    df_summary = pd.concat([df_summary, df_not_found[['Scaffold_id','Length','Span','Mu', 'Sigma']]])
     df_summary = df_summary.set_index('Scaffold_id')
     print(df_summary.head())
     return df_summary
@@ -72,15 +74,15 @@ def Format_Outputs(summary_dir, binning_method):
         if 'Summary.txt' in files[i] and files[i][0] != '.':
             print(files[i])
             col_prefix = files[i].replace("_Summary.txt","")
-            df = pd.read_csv(summary_dir+files[i], names = ['Scaffold','Span', col_prefix+'_Mu', col_prefix+'_Var'],
+            df = pd.read_csv(summary_dir+files[i], names = ['Scaffold','Length','Span', col_prefix+'_Mu', col_prefix+'_Var'],
                              sep='\t', index_col = 'Scaffold')
             df[col_prefix+'_Var'] = df[col_prefix+'_Var']*df[col_prefix+'_Var']
             print(df.head())
             if ctr > 0:
-                del df['Span']
+                del df['Span'], df['Length']
             if ctr == 0:
                 df['Avg_Depth'] = 0
-                df = df[['Span','Avg_Depth',col_prefix+'_Mu',col_prefix+'_Var']]
+                df = df[['Length','Avg_Depth',col_prefix+'_Mu',col_prefix+'_Var']]
             ctr += 1
             df_summary = df_summary.join(df, how = 'outer')
     df_mu = df_summary.filter(regex='_Mu')

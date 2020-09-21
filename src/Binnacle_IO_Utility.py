@@ -213,9 +213,15 @@ def Append_Removed_Contigs(opdir, df_not_found, prefix):
     df_coords_before_delinking.to_csv(opdir+'Coords_Before_Delinking.txt', sep = '\t', header = False)
     df_coords_after_delinking.to_csv(opdir+'Coords_After_Delinking.txt', sep = '\t', header = False)
 
+    df_coords_after_delinking['Length'] = np.abs(df_coords_after_delinking['Start'] - df_coords_after_delinking['End'])
+    df_cc_lengths = df_coords_after_delinking[['Length']].reset_index().groupby(['CC_After_Delinking']).sum()
+
     df_summary = pd.read_csv(opdir+prefix+'_Summary.txt', sep = '\t', names = ['CC_After_Delinking','Length', 'Mean', 'Std'])
     df_summary = pd.concat([df_summary, df_not_found[['CC_After_Delinking','Length','Mean','Std']]])
+    df_summary = df_summary.rename(columns = {'Length':'Span'})
     df_summary.set_index('CC_After_Delinking', inplace = True)
+    df_summary = df_summary.join(df_cc_lengths)
+    df_summary = df_summary[['Length', 'Span', 'Mean', 'Std']]
     df_summary.to_csv(opdir+prefix+'_Summary.txt', sep = '\t', header = False)
     
     
