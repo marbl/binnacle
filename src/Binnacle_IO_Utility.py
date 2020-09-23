@@ -117,7 +117,9 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
         if len(nodes) > 1:
             mean_ratios = Helper_Changepoints_Z_Stat(deepcopy(coverage), window_size = window_size)
             outliers = ID_outliers(mean_ratios, thresh=outlier_thresh)
-            outliers = Filter_Neighbors(outliers, mean_ratios, window_size=neighbors_outlier_filter)
+            #outliers = ID_Peaks(mean_ratios, thresh = outlier_thresh)
+            outliers = Filter_Neighbors(outliers, mean_ratios,window_size=neighbors_outlier_filter)
+            #outliers = ID_outliers(mean_ratios, thresh=outlier_thresh)
             Pos_Dict = Return_Contig_Scaffold_Positions(coords)
             g_removed = Get_Outlier_Contigs(outliers, Pos_Dict, coords, test, pos_cutoff=poscutoff)
             

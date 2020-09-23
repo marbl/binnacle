@@ -196,15 +196,15 @@ def Compute_Coverage(df_coverage, coords):
     return coverage
 
 def Helper_Changepoints_Z_Stat(cov_vec, window_size):
-    '''
-    Function to compute outliers in coverage signals. We use the two sample two sample Z-tests. 
+    
+    '''Function to compute outliers in coverage signals. We use the two sample two sample Z-tests. 
     The z-statistic is calculated by z = \frac{\mu_1-\mu_2}{\sqrt{\sigma_1^2+\sigma_2^2}}
     Input:
         cov_vec: The Coverage Vector estimated by the previous function. 
         window_size: Defaulting to 1500, this is the window size to identify change points. 
     Output:
-        cpts: A vector of the change point statistic
-    '''
+        cpts: A vector of the change point statistic'''
+    
     indices_non_zero = np.where(cov_vec > 0)
     sliced = cov_vec[indices_non_zero]
     while window_size >= len(sliced)/2:
@@ -218,33 +218,9 @@ def Helper_Changepoints_Z_Stat(cov_vec, window_size):
     cpts[indices_non_zero] = test_stat
     return cpts
 
-def Helper_Changepoints(cov_vec, window_size):
-    '''
-    Function to compute outliers in coverage signals. We use our own test statistic. 
-    The test statistic is calculated by p = \frac{max{\mu_1,\mu_2}}{min{\mu_1,\mu_2}}
-    Note: This function is not used anymore. 
-    Input:
-        cov_vec: The Coverage Vector estimated by the previous function. 
-        window_size: Defaulting to 1500, this is the window size to identify change points. 
-    Output:
-        cpts: A vector of the change point statistic
-    '''
-    indices_non_zero = np.where(cov_vec > 0)
-    sliced = cov_vec[indices_non_zero]
-    while window_size >= len(sliced)/2:
-        window_size = int(window_size/5) 
-    temp = np.convolve(sliced, np.ones(window_size), 'valid') / window_size
-    Pred, Succ = temp[0:len(temp)-window_size-1],temp[window_size+1:]
-    m = np.maximum(Pred, Succ)/np.minimum(Pred, Succ)
-    m[m == np.inf] = 0
-    mean_ratios = [0]*window_size + list(m) + [0]*window_size
-    cpts = np.zeros(len(cov_vec))
-    cpts[indices_non_zero] = mean_ratios
-    return cpts
-
 def ID_outliers(change_point_vec, thresh):
     '''
-    Function to eastimate outliers in the change point statistic vector. 
+    Function to estimate outliers in the change point statistic vector. 
     Input:
         change_point_vec: A vector of changepoints. 
         thresh: Thresh to identify outliers. 

@@ -82,7 +82,7 @@ def Format_Outputs(summary_dir, binning_method):
                 del df['Span'], df['Length']
             if ctr == 0:
                 df['Avg_Depth'] = 0
-                df = df[['Length','Avg_Depth',col_prefix+'_Mu',col_prefix+'_Var']]
+                df = df[['Span','Avg_Depth',col_prefix+'_Mu',col_prefix+'_Var']]
             ctr += 1
             df_summary = df_summary.join(df, how = 'outer')
     df_mu = df_summary.filter(regex='_Mu')
