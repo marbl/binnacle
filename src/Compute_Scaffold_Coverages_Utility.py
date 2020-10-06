@@ -229,7 +229,7 @@ def ID_outliers(change_point_vec, thresh):
     '''
     cutoff_upper = np.percentile(change_point_vec, thresh)
     cutoff_lower = np.percentile(change_point_vec, 100-thresh)
-    indices = np.where(((change_point_vec >= cutoff_upper) | (change_point_vec <= cutoff_lower))&(change_point_vec > 0))
+    indices = np.where(((change_point_vec >= cutoff_upper) | (change_point_vec <= cutoff_lower))&(change_point_vec != 0))
     return indices[0]
 
 def Filter_Neighbors(outlier_list, changepoints, window_size):
