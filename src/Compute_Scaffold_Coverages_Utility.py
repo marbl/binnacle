@@ -220,7 +220,7 @@ def Helper_Changepoints_Z_Stat(cov_vec, window_size):
 
 def ID_outliers(change_point_vec, thresh):
     '''
-    Function to estimate outliers in the change point statistic vector. 
+    Function to eastimate outliers in the change point statistic vector. 
     Input:
         change_point_vec: A vector of changepoints. 
         thresh: Thresh to identify outliers. 

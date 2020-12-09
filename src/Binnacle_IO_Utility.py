@@ -128,7 +128,7 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
             #wb_summary_before_delinking.write(d_before_dlink)
 
             delinked_conn_comps = list(nx.weakly_connected_components(g_removed))
-            print('Debug---->', cc_before_delinking, len(nodes), len(test.edges()), len(delinked_conn_comps), np.max(list(Pos_Dict.keys())))
+            print('Debug---->', cc_before_delinking, len(nodes), len(test.edges()), len(delinked_conn_comps), len(coverage))
 
             if len(delinked_conn_comps) == 1:
                 cc_after_delinking += 1
@@ -150,7 +150,8 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
                     mu, dev, span = round(np.mean(coverage_cc),1), round(np.std(coverage_cc),1), len(coverage_cc)
                     d_after_dlink = bytes(str(cc_after_delinking)+'\t'+str(span)+'\t'+str(mu)+'\t'+str(dev)+'\n', encoding = 'utf-8')
                     wb_summary_after_delinking.write(d_after_dlink)
-                    
+                    print('Debug_after_cc---->', cc_after_delinking, len(nodes_cc), len(cc.edges()),  len(coverage_cc))
+
                     for i in range(len(coverage_cc)):
                         d = bytes(str(cc_after_delinking)+'\t'+str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage_cc[i])+'\n', encoding = 'utf-8')
                         wb_cov_after_delinking.write(d)      
