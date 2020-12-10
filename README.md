@@ -13,7 +13,7 @@ For 20 complex stool samples from the human microbiome project, we ran MetaBat w
 
 
 ## Running binnacle
-### The detailed documentation and tutorial to install and run binnacle can be found on wiki(https://github.com/shahnidhi/binnacle/wiki).
+### The detailed documentation and tutorial to install and run binnacle can be found on [wiki](https://github.com/shahnidhi/binnacle/wiki).
 ```
 python Estimate_Abundances.py -h
 usage: Estimate_Abundances.py [-h] [-g ASSEMBLY] -a COVERAGE [-c CONTIGS] -d
