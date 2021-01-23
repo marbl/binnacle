@@ -4,11 +4,11 @@ Binnacle accurately computes coverage of graph scaffolds and seamlessly integrat
 
 ## Installation
 To run Binnacle, you will need Python 3.7.x, Bedtools, Samtools, BioPython, matplotlib, networkx, numpy, and Pandas. <br/>
-The detailed documentation about how to install these packages is given [here] (https://github.com/marbl/binnacle/wiki/1.-Package-Dependencies).
+The detailed documentation about how to install these packages is given [here](https://github.com/marbl/binnacle/wiki/1.-Package-Dependencies).
 We use graph scaffolds that are output of MetaCarvel scaffolding tool, so you will also need to download and install MetaCarvel. There is a step by step installation guide for MetaCarvel on their [Wiki](https://github.com/marbl/MetaCarvel/wiki). 
 
 ## Binning metagenomic data
-Generally, when you have one or multiple metagenomic samples, we need to assemble, scaffold, and bin contigs/scaffolds from each sample to generate metagenomic bins. We recommend using Megahit for assembly, and MetaCarvel for scaffolding. We provide a helper guide to work through assembly, scaffolding, and per-base coverage estimation steps [here] (https://github.com/marbl/binnacle/wiki/2.-Preparing-the-Data). 
+Generally, when you have one or multiple metagenomic samples, we need to assemble, scaffold, and bin contigs/scaffolds from each sample to generate metagenomic bins. We recommend using Megahit for assembly, and MetaCarvel for scaffolding. We provide a helper guide to work through assembly, scaffolding, and per-base coverage estimation steps [here](https://github.com/marbl/binnacle/wiki/2.-Preparing-the-Data). 
 
 Follow these steps to generate files for running binning methods with graph scaffolds:
 * Generate accurate scaffolds (mis-scaffolding module), and estimate scaffold span and coverage. <br/>
@@ -43,7 +43,7 @@ optional arguments:
                         Position cutoff to consider delinking (Default=100)
 ```
 * When working with multiple samples, we use reads from the same sample to "correct" graph scaffolds and estimate span. But, we can use reads from all other samples to estimate coverage of graph scaffolds across samples. Using information from multiple samples can help reduce noise in the binnning phase, and we highly recommennt it. 
-So, if you want to estimate coverage of graph scaffolds (Sample 1) from the reads of another sample (Sample 2), you will run Estimate_Abundances.py, just with these modifications.
+So, if you want to estimate coverage of graph scaffolds (Sample 1) from the reads of another sample (Sample 2), you will run Estimate_Abundances.py with these modifications.
 ```
 -g Provide graph scaffolds from Sample 1
 -a Coverage of contigs in Sample 1 by mapping reads of Sample 2 -- See Wiki for how to process coverage information
