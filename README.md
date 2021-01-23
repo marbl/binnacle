@@ -5,7 +5,7 @@ Binnacle accurately computes coverage of graph scaffolds and seamlessly integrat
 ## Installation
 To run Binnacle, you will need Python 3.7.x, Bedtools, Samtools, BioPython, matplotlib, networkx, numpy, and Pandas. <br/>
 The detailed documentation about how to install these packages is given [here](https://github.com/marbl/binnacle/wiki/1.-Package-Dependencies).
-We use graph scaffolds that are output of MetaCarvel scaffolding tool, so you will also need to download and install MetaCarvel. There is a step by step installation guide for MetaCarvel on their [Wiki](https://github.com/marbl/MetaCarvel/wiki). 
+We use graph scaffolds that are output of MetaCarvel scaffolding tool, so you will also need to download and install MetaCarvel. There is a step by step [installation guide](https://github.com/marbl/MetaCarvel/wiki) for MetaCarvel. 
 
 ## Binning metagenomic data
 Generally, when you have one or multiple metagenomic samples, we need to assemble, scaffold, and bin contigs/scaffolds from each sample to generate metagenomic bins. We recommend using Megahit for assembly, and MetaCarvel for scaffolding. We provide a helper guide to work through assembly, scaffolding, and per-base coverage estimation steps [here](https://github.com/marbl/binnacle/wiki/2.-Preparing-the-Data). 
