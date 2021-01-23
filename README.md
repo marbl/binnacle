@@ -74,8 +74,8 @@ optional arguments:
 ```
 * Using the abundances.txt file based on the method selection (-m) in the previous step, you can run that binning method to generate bins for your graph scaffolds.
 
-This tool is still under development. Please open issue here on Github or contact us if you have any questions.
-Harihara Muralidharan: hsmurali@cs.umd.edu
+This tool is still under development. Please open issue here on Github or contact us if you have any questions. <br/>
+Harihara Muralidharan: hsmurali@cs.umd.edu<br/>
 Nidhi Shah: nidhi@cs.umd.edu
 
 
