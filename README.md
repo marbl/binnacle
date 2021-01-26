@@ -1,38 +1,27 @@
-# Using scaffolds to improve the contiguity and quality of metagenomic bins
+# Binnacle - estimates coverage for graph scaffolds and integrates with existing metagenome binning tools
 
-Metagenomics has revolutionized the field of microbiology, however, reconstructing complete genomes of organisms from metagenomic data is still challenging. Recovered genomes are often fragments, due to repeats within and across genomes, uneven abundance of organisms, sequencing errors, and strain-level variations within a single sample. To address the fragmented nature of metagenomic assemblies, scientists rely on a process called binning which clusters together contigs that are inferred to originate from the same organism. Existing binning algorithms use oligonucleotide frequencies and contig abundance (coverage) within and across samples to group together contigs from the same organism. However, these algorithms often miss short contigs and contigs from regions with unusual coverage or DNA composition characteristics, such as mobile elements. We propose that information from assembly graphs can assist current strategies for metagenomic binning. We use [MetaCarvel](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1791-3), a metagenomic scaffolding tool, to construct assembly graphs where contigs are nodes and edges are inferred based on mate pair or paired-end reads. We show that binning scaffolds, rather than contigs, improves the contiguity and quality of the resulting bins on twenty stool samples from the Human Microbiome Project.
-
-## Results
-For 12 gut samples from the timeline of a premature infant, we ran MetaBat with contigs and Metabat with our scaffolds. since the references from the study was available, we used minimap to map the contigs to the references to compute completeness and contamination. We see an increase in the total number of basepairs binned for similar completeness and contamination.
-
+Binnacle accurately computes coverage of graph scaffolds and seamlessly integrates with leading binning methods such as MetaBAT2, MaxBin 2.0, and CONCOCT. Using graph scaffolds, as opposed to contigs (most common approach) for binning improves the contiguity and quality of metagenomic bins and can captures a broader set of the accessory elements of the reconstructed genomes.
 <tr> 
-    <p align="center"><img src="img/Fig-2-Sharon-Data.png" width=800 /></p>
+    <p align="center"><img src="img/Figure1.png" width=800 /></p>
 </tr>
 
-For 20 complex stool samples from the human microbiome project, we ran MetaBat with contigs and MetaBat with our scaffolds. For all samples, there was an increase in the number of contigs and length of the overall bins when using scaffolds instead of contigs for binning. We also used Checkm to evaluate completeness and contamination of bins. 
+## Installation
+To run Binnacle, you will need Python 3.7.x, Bedtools, Samtools, BioPython, matplotlib, networkx, numpy, and Pandas. <br/>
+The detailed documentation about how to install these packages is given [here](https://github.com/marbl/binnacle/wiki/1.-Package-Dependencies).
+We use graph scaffolds that are output of MetaCarvel scaffolding tool, so you will also need to download and install MetaCarvel. There is a step by step [installation guide](https://github.com/marbl/MetaCarvel/wiki) for MetaCarvel. 
 
-<tr> 
-    <p align="center"><img src="img/Fig-3-HMP-Samples.png" width=800 /></p>
-</tr>
- 
+## Binning metagenomic data
+Generally, when you have one or multiple metagenomic samples, we need to assemble, scaffold, and bin contigs/scaffolds from each sample to generate metagenomic bins. We recommend using Megahit for assembly, and MetaCarvel for scaffolding. We provide a helper guide to work through assembly, scaffolding, and per-base coverage estimation steps [here](https://github.com/marbl/binnacle/wiki/2.-Preparing-the-Data). 
 
-
-## Running binnacle
-### The detailed documentation and tutorial to install and run binnacle can be found on [wiki](https://github.com/shahnidhi/binnacle/wiki).
+Follow these steps to generate files for running binning methods with graph scaffolds:
+* Generate accurate scaffolds (mis-scaffolding module), and estimate scaffold span and coverage. <br/>
+  This step takes graph scaffolds from MetaCarvel output directory, and coverage estimated for contigs using reads from the same sample as input. It outputs coverage estimates for accurate set of graph scaffolds along with other necessary information about its coordinates, orientation, etc in the output directory. <br/>
+``` python3 Estimate_Abundances.py -g [ORIENTED.gml] -a [COVERAGE_SORTED.txt] -c [CONTIGS.fa] -d [OUTPUT_DIRECTORY]```<br/>
 ```
 python Estimate_Abundances.py -h
-usage: Estimate_Abundances.py [-h] [-g ASSEMBLY] -a COVERAGE [-c CONTIGS] -d
-                              DIR [-o COORDS] [-w WINDOW_SIZE] [-t THRESHOLD]
+usage: Estimate_Abundances.py [-h] [-g ASSEMBLY] -a COVERAGE [-c CONTIGS] -d DIR 
+                              [-o COORDS] [-w WINDOW_SIZE] [-t THRESHOLD]
                               [-n NEIGHBOR_CUTOFF] [-p POSCUTOFF]
-
-binnacle: A tool for binning metagenomic datasets using assembly graphs and
-scaffolds generated by metacarvel.Estimate_Abundances.py estimates abundance
-for scaffolds generated by MetaCarvel. If the coords file is specified then
-the abundance for each scaffold is estimated based on the abundance file (-a)
-and the coords file. If the coords file is not specified then binnacle
-etimates the abundance. While calculating all vs all abundances please specify
-the coords file.
-
 optional arguments:
   -h, --help            show this help message and exit
   -g ASSEMBLY, --assembly ASSEMBLY
@@ -56,7 +45,16 @@ optional arguments:
   -p POSCUTOFF, --poscutoff POSCUTOFF
                         Position cutoff to consider delinking (Default=100)
 ```
-To prepare the feature matrix for clustering we would require the all vs all alignment abundances. To do that the Collate.py program takes the path to the output directory where all the summary information generated by the previous script is placed and the method to format the output to.
+* When working with multiple samples, we use reads from the same sample to "correct" graph scaffolds and estimate span. But, we can use reads from all other samples to estimate coverage of graph scaffolds across samples. Using information from multiple samples can help reduce noise in the binnning phase, and we highly recommennt it. 
+So, if you want to estimate coverage of graph scaffolds (Sample 1) from the reads of another sample (Sample 2), you will run Estimate_Abundances.py with these modifications.
+```
+-g Provide graph scaffolds from Sample 1
+-a Coverage of contigs in Sample 1 by mapping reads of Sample 2 -- See Wiki for how to process coverage information
+-c contigs from Sample 1
+-o Coordinates of scaffolds from Sample 1 that you would have generated from the previous step.
+```
+* Once you have coverage estimated for graph scaffolds from all samples (all vs. all), we need to combine this information and generate files for running metagenome binning methods. We provide files that can be easily used with MetaBAT2, CONCOCT, and MaxBin2.0. <br/>
+To generate the feature matrix for clustering, we will use Collate.py program from Binnacle. It takes the path to the output directory where all the summary information generated by the previous steps are placed and the binning method that you would like to run next.
 ```
 python Collate.py -h                        
 usage: Collate.py [-h] -d DIR [-m METHOD] [-k KEEP]
@@ -77,3 +75,10 @@ optional arguments:
   -k KEEP, --keep KEEP  Retain the summary files generated by
                         Estimate_Abundances.py. Defaults to True 
 ```
+* Using the abundances.txt file based on the method selection (-m) in the previous step, you can run that binning method to generate bins for your graph scaffolds.
+
+This tool is still under development. Please open issue here on Github or contact us if you have any questions. <br/>
+Harihara Muralidharan: hsmurali@cs.umd.edu<br/>
+Nidhi Shah: nidhi@cs.umd.edu
+
+
