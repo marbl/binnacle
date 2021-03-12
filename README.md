@@ -79,7 +79,7 @@ optional arguments:
 
 ## Citation
 
-Please cite Muralidharan HS, Shah N, Meisel JS and Pop M (2021) Binnacle: Using Scaffolds to Improve the Contiguity and Quality of Metagenomic Bins. Front. Microbiol. 12:638561. [doi: 10.3389/fmicb.2021.638561] (https://www.frontiersin.org/articles/10.3389/fmicb.2021.638561/).
+Please cite Muralidharan HS, Shah N, Meisel JS and Pop M (2021) Binnacle: Using Scaffolds to Improve the Contiguity and Quality of Metagenomic Bins. Front. Microbiol. 12:638561. [doi: 10.3389/fmicb.2021.638561](https://www.frontiersin.org/articles/10.3389/fmicb.2021.638561/).
 
 This tool is still under development. Please open issue here on Github or contact us if you have any questions. <br/>
 Harihara Muralidharan: hsmurali@cs.umd.edu<br/>
