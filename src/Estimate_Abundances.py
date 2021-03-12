@@ -39,7 +39,7 @@ p = int(args.poscutoff)
 if not isdir(output_dir): mkdir(output_dir)
 
 head, tail = split(coverage_path)
-prefix = tail.split('.')[0]
+prefix = tail.replace(".txt","")
 print(prefix)
 
 if coords_path == "":

@@ -41,6 +41,7 @@ def Load_Read_Coverage(covpath, nodes, opdir, prefix=""):
     df_not_found = pd.read_csv(temp_not_found_path, sep = '\t', names = ['ContigID','Start','End','Coverage'],
                                low_memory = False, memory_map = True, engine='c',
                                dtype = {'Contig': str, 'Start': 'int32','End':'int32', 'coverage': 'int32'})
+    print(df_not_found)
     df_not_found_summary = Summarize_Coverages(df_not_found)
 
     df_coverage = pd.read_csv(temp_cov_path,names = ['Contig','Start','End','coverage'], 
@@ -55,6 +56,22 @@ def Load_Read_Coverage(covpath, nodes, opdir, prefix=""):
     print(df_not_found_summary.info(), '\n')
 
     return df_coverage, df_not_found_summary
+
+def Compress_Coverage_Vector(Coverage, id_before_delinking, id_after_delinking=''):
+    out_mat = ''
+    start = 0
+    Coverage = list(Coverage) +[-100]
+    for i in range(0, len(Coverage)-1):
+        curr = Coverage[i]
+        nxt = Coverage[i+1]
+        if curr != nxt:
+            if id_after_delinking == '':
+                o = str(id_before_delinking)+'\t'+str(start)+'\t'+str(i+1)+'\t'+str(curr)+'\n'
+            else:
+                o = str(id_after_delinking)+'\t'+str(id_before_delinking)+'\t'+str(start)+'\t'+str(i+1)+'\t'+str(curr)+'\n'
+            out_mat = out_mat+o
+            start = i+1
+    return out_mat
 
 def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_thresh=99, 
                            neighbors_outlier_filter=100, poscutoff=100,prefix = ""):
@@ -73,12 +90,12 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
     
     coverage_before_delinking = io.FileIO(outdir +'Coverages_Before_Delinking.txt', 'w')
     coords_before_delinking = io.FileIO(outdir + 'Coords_Before_Delinking.txt', 'w')
-    wb_cov_before_delinking = io.BufferedWriter(coverage_before_delinking)
-    wb_coords_before_delinking = io.BufferedWriter(coords_before_delinking)
-    
     coverage_after_delinking = io.FileIO(outdir + 'Coverages_After_Delinking.txt', 'w')
     coords_after_delinking = io.FileIO(outdir + 'Coords_After_Delinking.txt', 'w')
-    summary_after_delinking = io.FileIO(outdir + prefix+'_Summary.txt', 'w') 
+    summary_after_delinking = io.FileIO(outdir + prefix+'_Summary.txt', 'w')
+
+    wb_cov_before_delinking = io.BufferedWriter(coverage_before_delinking)
+    wb_coords_before_delinking = io.BufferedWriter(coords_before_delinking) 
     wb_cov_after_delinking = io.BufferedWriter(coverage_after_delinking)
     wb_coords_after_delinking = io.BufferedWriter(coords_after_delinking)
     wb_summary_after_delinking = io.BufferedWriter(summary_after_delinking)
@@ -103,9 +120,9 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
         coverage = Compute_Coverage(df_coverage_cc, coords)
             
         flag = False
-        for i in range(len(coverage)):
-            d = bytes(str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\n', encoding = 'utf-8')
-            wb_cov_before_delinking.write(d)  
+        outmat = Compress_Coverage_Vector(coverage, cc_before_delinking)
+        wb_cov_before_delinking.write(bytes(outmat, encoding='utf-8'))
+
         for c in coords:
             d = bytes(str(cc_before_delinking)+'\t'+c+'\t'+ str(coords[c][0]) + '\t' +  str(coords[c][1]) + '\n', encoding = 'utf-8')
             wb_coords_before_delinking.write(d)
@@ -117,16 +134,10 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
         if len(nodes) > 1:
             mean_ratios = Helper_Changepoints_Z_Stat(deepcopy(coverage), window_size = window_size)
             outliers = ID_outliers(mean_ratios, thresh=outlier_thresh)
-            #outliers = ID_Peaks(mean_ratios, thresh = outlier_thresh)
             outliers = Filter_Neighbors(outliers, mean_ratios,window_size=neighbors_outlier_filter)
-            #outliers = ID_outliers(mean_ratios, thresh=outlier_thresh)
             Pos_Dict = Return_Contig_Scaffold_Positions(coords)
             g_removed = Get_Outlier_Contigs(outliers, Pos_Dict, coords, test, pos_cutoff=poscutoff)
-            
             mu, dev, span = round(np.mean(coverage),1), round(np.std(coverage),1), len(coverage)
-            #d_before_dlink = bytes(str(cc_before_delinking) + '\t' + str(span) + '\t' + str(mu) + '\t' + str(dev) + '\n', encoding = 'utf-8')
-            #wb_summary_before_delinking.write(d_before_dlink)
-
             delinked_conn_comps = list(nx.weakly_connected_components(g_removed))
             print('Debug---->', cc_before_delinking, len(nodes), len(test.edges()), len(delinked_conn_comps), len(coverage))
 
@@ -145,16 +156,15 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
                             cc = Random_Simplify(cc, min_node)
                             min_node, min_indegree = Return_Starting_Point(cc)
                     else: min_node = nodes_cc[0]
+
                     coords_cc = Compute_Global_Coordinates(cc, min_node)
                     coverage_cc = Compute_Coverage(df_coverage_cc, coords_cc)
                     mu, dev, span = round(np.mean(coverage_cc),1), round(np.std(coverage_cc),1), len(coverage_cc)
                     d_after_dlink = bytes(str(cc_after_delinking)+'\t'+str(span)+'\t'+str(mu)+'\t'+str(dev)+'\n', encoding = 'utf-8')
                     wb_summary_after_delinking.write(d_after_dlink)
                     print('Debug_after_cc---->', cc_after_delinking, len(nodes_cc), len(cc.edges()),  len(coverage_cc))
-
-                    for i in range(len(coverage_cc)):
-                        d = bytes(str(cc_after_delinking)+'\t'+str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage_cc[i])+'\n', encoding = 'utf-8')
-                        wb_cov_after_delinking.write(d)      
+                    outmat = Compress_Coverage_Vector(coverage_cc, cc_before_delinking, cc_after_delinking)
+                    wb_cov_after_delinking.write(bytes(outmat, encoding='utf-8'))      
                     for c in coords_cc:
                         d = bytes(str(cc_after_delinking)+'\t'+str(cc_before_delinking)+'\t'+c+'\t'+str(coords_cc[c][0])+'\t'+str(coords_cc[c][1])+'\n',encoding = 'utf-8')
                         wb_coords_after_delinking.write(d)
@@ -163,12 +173,9 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
             mu, dev, span = round(np.mean(coverage),1), round(np.std(coverage),1), len(coverage)
             d_before_dlink = bytes(str(cc_before_delinking) + '\t'+ str(span)+'\t'+ str(mu) +'\t'+ str(dev) + '\n', encoding = 'utf-8')
             d_after_dlink = bytes(str(cc_after_delinking) + '\t'+ str(span)+'\t' +str(mu) +'\t'+ str(dev) + '\n', encoding = 'utf-8')
-            #wb_summary_before_delinking.write(d_before_dlink)
             wb_summary_after_delinking.write(d_after_dlink)
-            
-            for i in range(len(coverage)):
-                d = bytes(str(cc_after_delinking)+'\t'+str(cc_before_delinking)+'\t'+str(i)+'\t'+str(coverage[i])+'\n', encoding = 'utf-8')
-                wb_cov_after_delinking.write(d)
+            outmat = Compress_Coverage_Vector(coverage, cc_after_delinking, cc_before_delinking)
+            wb_cov_after_delinking.write(bytes(outmat, encoding = 'utf-8'))
                     
             for c in coords:
                 d = bytes(str(cc_after_delinking) + '\t' + str(cc_before_delinking) + '\t' +c+'\t'+str(coords[c][0]) + '\t' + str(coords[c][1]) + '\n', encoding = 'utf-8')
@@ -177,7 +184,6 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
     del df_coverage
     wb_cov_before_delinking.flush()
     wb_coords_before_delinking.flush()
-    #wb_summary_before_delinking.flush()
     wb_cov_after_delinking.flush()
     wb_coords_after_delinking.flush()
     wb_summary_after_delinking.flush()

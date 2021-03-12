@@ -283,16 +283,17 @@ def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff):
     '''
     g_ = deepcopy(graph)
     potential_contigs_removal = {}
+    counter_end_points = 0
     for o in outliers:
         try:
             contigs_intersecting = positions[o]
         except KeyError:
             print('Here')
-            #print(positions)
             print('KeyError', o, np.max(list(positions.keys())))
             continue
         closest_contig, closest_contig_val = '',np.inf
         forward, start = True, True
+        o_flag = False
         for contig in contigs_intersecting:
             s,e = coordinates[contig]
             if s>e: f = False
@@ -307,9 +308,15 @@ def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff):
                 closest_contig = contig
                 forward = f
                 start = False
+            if np.abs(s-o) <= 3*pos_cutoff or np.abs(e-o) <= 3*pos_cutoff:
+                o_flag = True
         if closest_contig_val <= pos_cutoff:
             potential_contigs_removal[closest_contig] = (closest_contig_val, o, forward, start)
-    
+        if o_flag:#closest_contig_val <= 2*pos_cutoff:
+            counter_end_points += 1
+            
+    print('---->',len(outliers), counter_end_points)
+
     for c in potential_contigs_removal:
         p = potential_contigs_removal[c]
         fwd, start = p[2], p[3]       
