@@ -20,8 +20,7 @@ Follow these steps to generate files for running binning methods with graph scaf
 Contig level coverages can be presented to binnacle either as a text file describing th perbase coverage or bam and bed files of the read alignments.
 
 <br/>
-``` 
-python3 Estimate_Abundances.py -g [ORIENTED.gml] -a [COVERAGE_SORTED.txt] -c [CONTIGS.fa] -d [OUTPUT_DIRECTORY]<br/>
+```python3 Estimate_Abundances.py -g [ORIENTED.gml] -a [COVERAGE_SORTED.txt] -c [CONTIGS.fa] -d [OUTPUT_DIRECTORY]<br/>
 usage: Estimate_Abundances.py [-h] [-g ASSEMBLY] [-a COVERAGE] [-bam BAMFILE]
                               [-bed BEDFILE] [-c CONTIGS] -d DIR [-o COORDS]
                               [-w WINDOW_SIZE] [-t THRESHOLD]
@@ -67,10 +66,11 @@ optional arguments:
   -p POSCUTOFF, --poscutoff POSCUTOFF
                         Position cutoff to consider delinking (Default=100)
   -pre PREFIX, --prefix PREFIX
-                        Prefix to be attached to all outputs
-```
+                        Prefix to be attached to all outputs```
+            
 * When working with multiple samples, we use reads from the same sample to "correct" graph scaffolds and estimate span. But, we can use reads from all other samples to estimate coverage of graph scaffolds across samples. Using information from multiple samples can help reduce noise in the binnning phase, and we highly recommennt it. 
 So, if you want to estimate coverage of graph scaffolds (Sample 1) from the reads of another sample (Sample 2), you will run Estimate_Abundances.py with these modifications.
+
 ```-g Provide graph scaffolds from Sample 1
 -a Coverage of contigs in Sample 1 by mapping reads of Sample 2 -- See Wiki for how to process coverage information
 -c contigs from Sample 1
