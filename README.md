@@ -6,7 +6,8 @@ Binnacle accurately computes coverage of graph scaffolds and seamlessly integrat
 </tr>
 
 ## Installation
-To run Binnacle, you will need Python 3.7.x, Bedtools, Samtools, BioPython, matplotlib, networkx, numpy, and Pandas. <br/>
+To run Binnacle, you will need Python 3.7.x, Bedtools, Samtools, BioPython, networkx, numpy, and Pandas. <br/>
+A yml file is available and this can be used to create a conda environment that is suitable to run binnacle. 
 The detailed documentation about how to install these packages is given [here](https://github.com/marbl/binnacle/wiki/1.-Package-Dependencies).
 We use graph scaffolds that are output of MetaCarvel scaffolding tool, so you will also need to download and install MetaCarvel. There is a step by step [installation guide](https://github.com/marbl/MetaCarvel/wiki) for MetaCarvel. 
 
@@ -15,8 +16,9 @@ Generally, when you have one or multiple metagenomic samples, we need to assembl
 
 Follow these steps to generate files for running binning methods with graph scaffolds:
 * Generate accurate scaffolds (mis-scaffolding module), and estimate scaffold span and coverage. <br/>
-  This step takes graph scaffolds from MetaCarvel output directory, and coverage estimated for contigs using reads from the same sample as input. It outputs coverage estimates for accurate set of graph scaffolds along with other necessary information about its coordinates, orientation, etc in the output directory. <br/>
-``` python3 Estimate_Abundances.py -g [ORIENTED.gml] -a [COVERAGE_SORTED.txt] -c [CONTIGS.fa] -d [OUTPUT_DIRECTORY]```<br/>
+  This step takes graph scaffolds from MetaCarvel output directory, and coverage estimated for contigs using reads from the same sample as input. It outputs coverage estimates for accurate set of graph scaffolds along with other necessary information about its coordinates, orientation, etc in the output directory.
+Contig level coverages can be presented to binnacle either as a text file describing th perbase coverage or bam and bed files of the read alignments.
+<br/>``` python3 Estimate_Abundances.py -g [ORIENTED.gml] -a [COVERAGE_SORTED.txt] -c [CONTIGS.fa] -d [OUTPUT_DIRECTORY]```<br/>
 ```
 usage: Estimate_Abundances.py [-h] [-g ASSEMBLY] [-a COVERAGE] [-bam BAMFILE]
                               [-bed BEDFILE] [-c CONTIGS] -d DIR [-o COORDS]
