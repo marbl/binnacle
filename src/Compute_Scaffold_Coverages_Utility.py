@@ -12,18 +12,52 @@ import networkx as nx
 from copy import deepcopy
 
 def Mean(group):
+    '''
+    Function to estimate the mean coverage of a pandas group.
+    Input:
+        group: Pandas group grouped by scaffold id or contig
+    Output:
+        returns the mean of the group
+    '''
     freq = group['Length'].tolist()
     val = group['Coverage'].tolist()
     vec = np.repeat(val, freq)
     return round(np.mean(vec),1)
 
 def Deviation(group):
+    '''
+    Function to estimate the standard deviation of coverage of a pandas group.
+    Input:
+        group: Pandas group grouped by scaffold id or contig
+    Output:
+        returns the deviation of the group
+    '''
     freq = group['Length'].tolist()
     val = group['Coverage'].tolist()
     vec = np.repeat(val, freq)
     return round(np.std(vec),1)
 
+def Percentile(group, p):
+    '''
+    Function to estimate the pth percentile of coverage of a pandas group.
+    Input:
+        group: Pandas group grouped by scaffold id or contig
+    Output:
+        returns the pth percentile of the group
+    '''
+    freq = group['Length'].tolist()
+    val = group['Coverage'].tolsit()
+    vec = np.repeat(val,freq)
+    return round(np.percentile(vec, p))
+    
 def Summarize_Coverages(df):
+    '''
+    Function to estimate the summary of coverage values of a pandas group.
+    Input:
+        group: Pandas dtafarame containing coverages
+    Output:
+        returns the summary of coverage of each contig in the dataframe.
+    '''
     df['Length'] = df['End']-df['Start']
     df_length = df[['ContigID', 'End']].groupby('ContigID').max().rename(columns = {'End':'Length'})
     df_op = pd.DataFrame()
@@ -315,8 +349,6 @@ def Get_Outlier_Contigs(outliers, positions, coordinates, graph, pos_cutoff):
         if o_flag:#closest_contig_val <= 2*pos_cutoff:
             counter_end_points += 1
             
-    print('---->',len(outliers), counter_end_points)
-
     for c in potential_contigs_removal:
         p = potential_contigs_removal[c]
         fwd, start = p[2], p[3]       

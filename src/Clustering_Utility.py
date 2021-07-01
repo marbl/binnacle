@@ -8,7 +8,7 @@ Harihara Subrahmaniam Muralidharan, Nidhi Shah, Jacquelyn S Meisel.
 
 from Binnacle_IO_Utility import *
 
-def Process_Scaffold_Coverages(df_coverages, df_coords, df_not_found):
+def Estimate_Scaffold_Coverage_Coords(df_coverages, df_coords, df_not_found):
     '''
     Function to generate the features for all vs all alignments. 
     Input:

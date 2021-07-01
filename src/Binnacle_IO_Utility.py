@@ -8,6 +8,7 @@ Harihara Subrahmaniam Muralidharan, Nidhi Shah, Jacquelyn S Meisel.
 
 import io
 import subprocess
+import Bio as bio
 from Bio import SeqIO
 from os import remove, mkdir, listdir
 from os.path import isfile, isdir, split
@@ -33,7 +34,6 @@ def Load_Read_Coverage(covpath, nodes, opdir, prefix=""):
     temp_cov_path = opdir+prefix+'_Temp_Cov.txt'
     command = 'LANG=en_EN join '+opdir+prefix+'_Temp_Node_List.txt '+covpath+' > '+temp_cov_path
     result = subprocess.getoutput(command)
-
     temp_not_found_path = opdir+prefix+'_Temp_Not_Found.txt'
     command = 'awk \'NR==FNR{c[$1]++;next};c[$1] == 0\' ' +  opdir+prefix+'_Temp_Node_List.txt '+covpath+ ' > '+temp_not_found_path
     result = subprocess.getoutput(command)
@@ -41,7 +41,6 @@ def Load_Read_Coverage(covpath, nodes, opdir, prefix=""):
     df_not_found = pd.read_csv(temp_not_found_path, sep = '\t', names = ['ContigID','Start','End','Coverage'],
                                low_memory = False, memory_map = True, engine='c',
                                dtype = {'Contig': str, 'Start': 'int32','End':'int32', 'coverage': 'int32'})
-    print(df_not_found)
     df_not_found_summary = Summarize_Coverages(df_not_found)
 
     df_coverage = pd.read_csv(temp_cov_path,names = ['Contig','Start','End','coverage'], 
@@ -51,13 +50,19 @@ def Load_Read_Coverage(covpath, nodes, opdir, prefix=""):
     remove(opdir+prefix+'_Temp_Node_List.txt')
     remove(temp_cov_path)
     remove(temp_not_found_path)
-
-    print(df_coverage.info(), '\n')
-    print(df_not_found_summary.info(), '\n')
-
+    
     return df_coverage, df_not_found_summary
 
 def Compress_Coverage_Vector(Coverage, id_before_delinking, id_after_delinking=''):
+    '''
+    Function to compress a coverage vector, similar to the BGA split format.
+    Input:
+        Coverage: Coverage vector of the scaffold
+        id_before_delinking: scaffold id before delinking based on chnagepoints
+        id_after_delinking: scaffold id of the scaffold under study
+    Output:
+        out_mat: Returns the compresed coverage matrix. 
+    '''
     out_mat = ''
     start = 0
     Coverage = list(Coverage) +[-100]
@@ -191,6 +196,13 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
     print('Done.....')
 
 def Append_Removed_Contigs(opdir, df_not_found, prefix):
+    '''
+    Function to append the contigs not considered for scaffolding by metacarvel.
+    Input:
+        opdir: Directory containing the intermediate outputs written by binnacle
+        df_not_found: dataframe of coverage not considered for scaffolding by metacarvel
+        prefix: Prefix to append to output files. 
+    '''
     df_coords_before_delinking = pd.read_csv(opdir+'Coords_Before_Delinking.txt', sep = '\t',
                                              names = ['CC_Before_Delinking','Contig','Start','End'])
     max_cc_before_delinking = df_coords_before_delinking['CC_Before_Delinking'].max()
@@ -209,19 +221,17 @@ def Append_Removed_Contigs(opdir, df_not_found, prefix):
     df_not_found['Ingraph'] = 0
     df_not_found['Start'] = 0
     df_not_found['End'] = df_not_found['Length'].tolist()
-    print(df_not_found.head())
     
     df_coords_before_delinking = pd.concat([df_coords_before_delinking, df_not_found[['CC_Before_Delinking','Contig','Start','End']]])
-    df_coords_after_delinking = pd.concat([df_coords_after_delinking, df_not_found[['CC_After_Delinking','CC_Before_Delinking','Contig','Start','End', 'Ingraph']]])
     df_coords_before_delinking['Length'] = np.abs(df_coords_before_delinking['Start']-df_coords_before_delinking['End'])
-    df_coords_after_delinking['Length'] = np.abs(df_coords_after_delinking['Start']-df_coords_after_delinking['End'])
-    
     df_coords_before_delinking.set_index('CC_Before_Delinking', inplace = True)
-    df_coords_after_delinking.set_index('CC_After_Delinking', inplace = True)
-
     df_coords_before_delinking.to_csv(opdir+'Coords_Before_Delinking.txt', sep = '\t', header = False)
+    
+    df_coords_after_delinking = pd.concat([df_coords_after_delinking, df_not_found[['CC_After_Delinking','CC_Before_Delinking','Contig','Start','End', 'Ingraph']]])
+    df_coords_after_delinking['Length'] = np.abs(df_coords_after_delinking['Start']-df_coords_after_delinking['End'])
+    df_coords_after_delinking.set_index('CC_After_Delinking', inplace = True)
     df_coords_after_delinking.to_csv(opdir+'Coords_After_Delinking.txt', sep = '\t', header = False)
-
+   
     df_coords_after_delinking['Length'] = np.abs(df_coords_after_delinking['Start'] - df_coords_after_delinking['End'])
     df_cc_lengths = df_coords_after_delinking[['Length']].reset_index().groupby(['CC_After_Delinking']).sum()
 
