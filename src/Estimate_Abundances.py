@@ -62,9 +62,6 @@ if not isdir(output_dir): mkdir(output_dir)
 coverage_path = Get_Coverage_Wrapper(bed_path, bam_path, coverage_path, contigs_path, coords_path, output_dir, prefix)
 if not isdir(output_dir): mkdir(output_dir)
 
-head, tail = split(coverage_path)
-prefix = tail.replace(".txt","")
-
 if coords_path == "":
     print('Estimating Abundance from scratch...')
     if graph_path == "":
