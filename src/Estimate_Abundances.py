@@ -60,7 +60,6 @@ if output_dir[-1] != '/': output_dir = output_dir+'/'
 if not isdir(output_dir): mkdir(output_dir)
 
 coverage_path = Get_Coverage_Wrapper(bed_path, bam_path, coverage_path, contigs_path, coords_path, output_dir, prefix)
-if not isdir(output_dir): mkdir(output_dir)
 
 if coords_path == "":
     print('Estimating Abundance from scratch...')
