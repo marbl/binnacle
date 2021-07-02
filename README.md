@@ -68,14 +68,20 @@ optional arguments:
   -pre PREFIX, --prefix PREFIX
                         Prefix to be attached to all outputs
 ```
-            
+* If you want to estimate coverage of graph scaffolds (Sample 1) from the reads of another sample (Sample 2), you will run Estimate_Abundances.py with the following parameters, 
+
+```
+-g Path to oriented.gml from running metacarvel on sample 1
+-c Path to contigs obtained by assembling reads of sample 1
+-a Coverage of contigs in Sample 1 by mapping reads of Sample 2 -- See Wiki for how to process coverage information
+-d Output directory
+```
+
 * When working with multiple samples, we use reads from the same sample to "correct" graph scaffolds and estimate span. But, we can use reads from all other samples to estimate coverage of graph scaffolds across samples. Using information from multiple samples can help reduce noise in the binnning phase, and we highly recommennt it. 
 So, if you want to estimate coverage of graph scaffolds (Sample 1) from the reads of another sample (Sample 2), you will run Estimate_Abundances.py with these modifications.
 
 ```
--g Provide graph scaffolds from Sample 1
 -a Coverage of contigs in Sample 1 by mapping reads of Sample 2 -- See Wiki for how to process coverage information
--c contigs from Sample 1
 -o Coordinates of scaffolds from Sample 1 that you would have generated from the previous step.
 -d Same output directory as Sample 1
 ```
