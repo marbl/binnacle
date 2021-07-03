@@ -17,7 +17,7 @@ Generally, when you have one or multiple metagenomic samples, we need to assembl
 Follow these steps to generate files for running binning methods with graph scaffolds:
 * Generate accurate scaffolds (mis-scaffolding module), and estimate scaffold span and coverage. <br/>
   This step takes graph scaffolds from MetaCarvel output directory, and coverage estimated for contigs using reads from the same sample as input. It outputs coverage estimates for accurate set of graph scaffolds along with other necessary information about its coordinates, orientation, etc in the output directory.
-Contig level coverages can be presented to binnacle either as a text file describing th perbase coverage or bam and bed files of the read alignments.
+Contig level coverages can be presented to binnacle either as a text file describing the perbase coverage or bam and bed files of the read alignments.
 
 ```
 python3 Estimate_Abundances.py -g [ORIENTED.gml] -a [COVERAGE_SORTED.txt] -c [CONTIGS.fa] -d [OUTPUT_DIRECTORY]
@@ -73,15 +73,15 @@ optional arguments:
 ```
 -g Path to oriented.gml from running metacarvel on sample
 -c Path to contigs obtained by assembling reads of sample
--a Coverage of contigs in ths sample by mapping to its reads -- See Wiki for how to process coverage information
+-a Coverage of contigs in ths sample by mapping to its reads -- See Wiki for how to calculate coverage information
 -d Output directory
 ```
 
-* When working with multiple samples, we use reads from the same sample to "correct" graph scaffolds and estimate span. But, we can use reads from all other samples to estimate coverage of graph scaffolds across samples. Using information from multiple samples can help reduce noise in the binnning phase, and we highly recommennt it. 
+* When working with multiple samples, we use reads from the same sample to "correct" graph scaffolds and estimate its span. But, we can use reads from all other samples to estimate coverage of graph scaffolds across samples. Using information from multiple samples can help reduce noise in the binnning phase, and we highly recommennt it. 
 So, if you want to estimate coverage of graph scaffolds (Sample 1) from the reads of another sample (Sample 2), you will run Estimate_Abundances.py with these modifications.
 
 ```
--a Coverage of contigs in Sample 1 by mapping reads of Sample 2 -- See Wiki for how to process coverage information
+-a Coverage of contigs in Sample 1 by mapping reads of Sample 2 -- See Wiki for how to calculate coverage information
 -o Coordinates of scaffolds from Sample 1 that you would have generated from the previous step.
 -d Same output directory as Sample 1
 ```
@@ -110,7 +110,9 @@ optional arguments:
                         Estimate_Abundances.py. Defaults to True 
 ```
 
-* Using the abundances.txt file based on the method selection (-m) in the previous step, you can run that binning method to generate bins for your graph scaffolds.
+* Using the abundances.txt file based on the method selected (-m) in the previous step, you can run that binning method to generate bins for your graph scaffolds.
+
+Please checkout the [wiki](https://github.com/marbl/binnacle/wiki) for a detailed description on setting up the python environment, methods to calculate coverage and a typical workflow to run binnacle. 
 
 ## Citation
 
