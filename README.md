@@ -68,12 +68,12 @@ optional arguments:
   -pre PREFIX, --prefix PREFIX
                         Prefix to be attached to all outputs
 ```
-* If you want to estimate coverage of graph scaffolds (Sample 1) from the reads of another sample (Sample 2), you will run Estimate_Abundances.py with the following parameters, 
+* If you want to estimate coverage of graph scaffolds of a sample from its reads  you will run Estimate_Abundances.py with the following parameters, 
 
 ```
--g Path to oriented.gml from running metacarvel on sample 1
--c Path to contigs obtained by assembling reads of sample 1
--a Coverage of contigs in Sample 1 by mapping reads of Sample 2 -- See Wiki for how to process coverage information
+-g Path to oriented.gml from running metacarvel on sample
+-c Path to contigs obtained by assembling reads of sample
+-a Coverage of contigs in ths sample by mapping to its reads -- See Wiki for how to process coverage information
 -d Output directory
 ```
 
