@@ -1,6 +1,6 @@
 # Binnacle - estimates coverage for graph scaffolds and integrates with existing metagenome binning tools
 
-Binnacle accurately computes coverage of graph scaffolds and seamlessly integrates with leading binning methods such as MetaBAT2, MaxBin 2.0, and CONCOCT. Using graph scaffolds, as opposed to contigs (most common approach) for binning improves the contiguity and quality of metagenomic bins and can captures a broader set of the accessory elements of the reconstructed genomes.
+Binnacle accurately computes coverage of graph scaffolds and seamlessly integrates with leading binning methods such as MetaBAT2, MaxBin 2.0, and CONCOCT. Using graph scaffolds, as opposed to contigs (most common approach) for binning improves the contiguity and quality of metagenomic bins and can capture a broader set of the accessory elements of the reconstructed genomes.
 <tr> 
     <p align="center"><img src="img/Figure1.png" width=750 /></p>
 </tr>
