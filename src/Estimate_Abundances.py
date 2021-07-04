@@ -92,6 +92,5 @@ else:
     node_list = df_coords_filtered['Contig'].tolist()
     df_coverage, df_not_found_summary = Load_Read_Coverage(coverage_path, node_list, output_dir, prefix) 
     df_summary = Estimate_Scaffold_Coverage_Coords(df_coverage, df_coords_filtered, df_not_found_summary)
-    df_summary = Process_Scaffold_Coverages(df_coverage, df_coords_filtered, df_not_found_summary)
     df_summary.to_csv(output_dir + prefix+'_Summary.txt', sep = '\t', header = False)
     print('Written Coverages')
