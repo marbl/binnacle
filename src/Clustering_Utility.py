@@ -26,6 +26,9 @@ def Estimate_Scaffold_Coverage_Coords(df_coverages, df_coords, df_not_found):
     df_coords['Coords'] = list(zip(df_coords['Start'].tolist(), df_coords['End'].tolist()))
     mu_list, sigma_list, spanlist, lengthlist = [], [], [], []
 
+    print(df_coverages.head())
+    contigs_in_coverages = list(df_coverages.index.unique())
+    #print(contigs_in_coverages)
     for scaffold in np.unique(scaffolds):
         df_coords_filtered = df_coords.loc[scaffold]
         if counter[scaffold] > 1:
@@ -34,7 +37,17 @@ def Estimate_Scaffold_Coverage_Coords(df_coverages, df_coords, df_not_found):
             coords = {df_coords_filtered['Contig']:df_coords_filtered['Coords']}
 
         contigs = list(coords.keys())
-        df_coverages_scaffold = df_coverages.loc[contigs]
+        try:
+            df_coverages_scaffold = df_coverages.loc[contigs]
+        except KeyError:
+            print('Key Error. Filtering....')
+            contigs_not_in_coverages = list(set(contigs) - set(contigs_in_coverages))
+            contigs_in_scaffold = list(set(contigs) - set(contigs_not_in_coverages))
+            df_coverages_scaffold = df_coverages.loc[contigs_in_scaffold]
+            for c in contigs_not_in_coverages:
+                length = max(coords[c])-min(coords[c])
+                df_coverages_scaffold.loc[c] = [0,length,0]
+
         coverages = Compute_Coverage(df_coverages_scaffold, coords)
         mean, std = round(np.mean(coverages),1), round(np.std(coverages), 1)
         length = np.sum(np.abs(df_coords_filtered['Start'] - df_coords_filtered['End']))
