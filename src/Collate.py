@@ -22,6 +22,9 @@ args = parser.parse_args()
 summary_dir = args.dir
 summary_method = args.method
 
+if summary_dir[-1] != '/':
+    summary_dir += '/'
+    
 df_summary = Format_Outputs(summary_dir, summary_method)
 print(df_summary.head())
 
