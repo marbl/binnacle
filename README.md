@@ -20,7 +20,7 @@ Follow these steps to generate files for running binning methods with graph scaf
 Contig level coverages can be presented to binnacle either as a text file describing the perbase coverage or bam and bed files of the read alignments.
 
 ```
-python3 Estimate_Abundances.py -g [ORIENTED.gml] -a [COVERAGE_SORTED.txt] -c [CONTIGS.fa] -d [OUTPUT_DIRECTORY]
+python Estimate_Abundances.py -g [ORIENTED.gml] -a [COVERAGE_SORTED.txt] -c [CONTIGS.fa] -d [OUTPUT_DIRECTORY]
 usage: Estimate_Abundances.py [-h] [-g ASSEMBLY] [-a COVERAGE] [-bam BAMFILE]
                               [-bed BEDFILE] [-c CONTIGS] -d DIR [-o COORDS]
                               [-w WINDOW_SIZE] [-t THRESHOLD]
