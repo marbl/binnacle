@@ -116,7 +116,7 @@ optional arguments:
 
 Please checkout the [wiki](https://github.com/marbl/binnacle/wiki) for a detailed description on setting up the python environment, methods to calculate coverage and a typical workflow to run binnacle. 
 
-To visualize the graph scaffolds we recommend using  [MetagenomeScope]https://github.com/marbl/MetagenomeScope which is a web-based browser. The input to metagenomescope is Assembly_Graph_Filtered.gml. Detailed documentation on installing and running MetagenomeScope is given [here](https://github.com/marbl/MetagenomeScope/wiki).
+To visualize the graph scaffolds we recommend using  [MetagenomeScope](https://github.com/marbl/MetagenomeScope) which is a web-based browser. The input to metagenomescope is Assembly_Graph_Filtered.gml. Detailed documentation on installing and running MetagenomeScope is given [here](https://github.com/marbl/MetagenomeScope/wiki).
 
 ## Citation
 
