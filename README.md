@@ -1,3 +1,5 @@
+To
+
 # Binnacle - estimates coverage for graph scaffolds and integrates with existing metagenome binning tools
 
 Binnacle accurately computes coverage of graph scaffolds and seamlessly integrates with leading binning methods such as MetaBAT2, MaxBin 2.0, and CONCOCT. Using graph scaffolds, as opposed to contigs (most common approach) for binning improves the contiguity and quality of metagenomic bins and can capture a broader set of the accessory elements of the reconstructed genomes.
@@ -113,6 +115,8 @@ optional arguments:
 * Using the abundances.txt file based on the method selected (-m) in the previous step, you can run that binning method to generate bins for your graph scaffolds.
 
 Please checkout the [wiki](https://github.com/marbl/binnacle/wiki) for a detailed description on setting up the python environment, methods to calculate coverage and a typical workflow to run binnacle. 
+
+To visualize the graph scaffolds we recommend using  [MetagenomeScope]https://github.com/marbl/MetagenomeScope which is a web-based browser. The input to metagenomescope is Assembly_Graph_Filtered.gml. Detailed documentation on installing and running MetagenomeScope is given [here](https://github.com/marbl/MetagenomeScope/wiki).
 
 ## Citation
 
