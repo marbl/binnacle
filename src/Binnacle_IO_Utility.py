@@ -106,6 +106,7 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
     wb_summary_after_delinking = io.BufferedWriter(summary_after_delinking)
     
     cc_before_delinking, cc_after_delinking = 0, 0
+    G_filtered = nx.DiGraph()
 
     for conn in weakly_connected_components:
         test = nx.DiGraph(graph.subgraph(conn))
@@ -135,6 +136,10 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
         if len(nodes) == 1:
             cc_after_delinking += 1
             flag =  True
+            G_filtered.add_nodes_from(test.nodes())
+            for n in test.nodes():
+                G_filtered.nodes[n]['orientation'] = test.nodes[n]['orientation']
+                G_filtered.nodes[n]['length'] = test.nodes[n]['length']
 
         if len(nodes) > 1:
             mean_ratios = Helper_Changepoints_Z_Stat(deepcopy(coverage), window_size = window_size)
@@ -145,7 +150,18 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
             mu, dev, span = round(np.mean(coverage),1), round(np.std(coverage),1), len(coverage)
             delinked_conn_comps = list(nx.weakly_connected_components(g_removed))
             print('Debug---->', cc_before_delinking, len(nodes), len(test.edges()), len(delinked_conn_comps), len(coverage))
-
+            
+            G_filtered.add_nodes_from(g_removed.nodes())
+            G_filtered.add_edges_from(g_removed.edges())
+            for n in g_removed.nodes():
+                G_filtered.nodes[n]['orientation'] = g_removed.nodes[n]['orientation']
+                G_filtered.nodes[n]['length'] = g_removed.nodes[n]['length']
+            for e in g_removed.edges():
+                G_filtered[e[0]][e[1]]['orientation'] = g_removed[e[0]][e[1]]['orientation']
+                G_filtered[e[0]][e[1]]['mean'] = g_removed[e[0]][e[1]]['mean']
+                G_filtered[e[0]][e[1]]['stdev'] = g_removed[e[0]][e[1]]['stdev']
+                G_filtered[e[0]][e[1]]['bsize'] = g_removed[e[0]][e[1]]['bsize']
+                
             if len(delinked_conn_comps) == 1:
                 cc_after_delinking += 1
                 flag = True  
@@ -192,6 +208,7 @@ def Write_Coverage_Outputs(graph,df_coverage, outdir, window_size=1500, outlier_
     wb_cov_after_delinking.flush()
     wb_coords_after_delinking.flush()
     wb_summary_after_delinking.flush()
+    nx.write_gml(G_filtered, outdir+'Assembly_Graph_Filtered.gml')
     
     print('Done.....')
 
