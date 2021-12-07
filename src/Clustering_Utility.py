@@ -64,6 +64,8 @@ def Estimate_Scaffold_Coverage_Coords(df_coverages, df_coords, df_not_found):
     df_not_found = df_not_found.rename(columns = {'Mean':'Mu', 'Std':'Sigma'})
     df_not_found['Span'] = df_not_found['Length']
     df_summary = pd.concat([df_summary, df_not_found[['Scaffold_id','Length','Span','Mu', 'Sigma']]])
+    df_summary['Scaffold_id'] = df_summary['Scaffold_id'].astype(str)
+    df_summary['Scaffold_id'] = 'Binnacle_Scaffold_'+df_summary['Scaffold_id']
     df_summary = df_summary.set_index('Scaffold_id')
     print(df_summary.head())
     return df_summary

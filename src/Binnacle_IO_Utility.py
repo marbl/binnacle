@@ -247,13 +247,15 @@ def Append_Removed_Contigs(opdir, df_not_found, prefix):
     df_coords_after_delinking = pd.concat([df_coords_after_delinking, df_not_found[['CC_After_Delinking','CC_Before_Delinking','Contig','Start','End', 'Ingraph']]])
     df_coords_after_delinking['Length'] = np.abs(df_coords_after_delinking['Start']-df_coords_after_delinking['End'])
     df_coords_after_delinking.set_index('CC_After_Delinking', inplace = True)
-    df_coords_after_delinking.to_csv(opdir+'Coords_After_Delinking.txt', sep = '\t', header = False)
-   
+    df_coords_after_delinking.to_csv(opdir+'Coords_After_Delinking.txt', sep = '\t', header = False)   
     df_coords_after_delinking['Length'] = np.abs(df_coords_after_delinking['Start'] - df_coords_after_delinking['End'])
+
     df_cc_lengths = df_coords_after_delinking[['Length']].reset_index().groupby(['CC_After_Delinking']).sum()
 
     df_summary = pd.read_csv(opdir+prefix+'_Summary.txt', sep = '\t', names = ['CC_After_Delinking','Length', 'Mean', 'Std'])
     df_summary = pd.concat([df_summary, df_not_found[['CC_After_Delinking','Length','Mean','Std']]])
+    df_summary['CC_After_Delinking'] = df_summary['CC_After_Delinking'].astype(str)
+    df_summary['CC_After_Delinking'] = 'Binnacle_Scaffold_'+df_summary['CC_After_Delinking']
     df_summary = df_summary.rename(columns = {'Length':'Span'})
     df_summary.set_index('CC_After_Delinking', inplace = True)
     df_summary = df_summary.join(df_cc_lengths)
@@ -305,7 +307,7 @@ def Write_Scaffolds(Contigs_Path, Coords_Path, op_path):
         wb = io.BufferedWriter(f_op)
 
         for c in connected_component_keys:
-            fasta_seq = '>'+str(c)+'\n'
+            fasta_seq = '>Binnacle_Scaffold_'+str(c)+'\n'
             contigs_in_scaffold = list(Scaffolds[c])
             add_buff = 'N'*100
             for contig in contigs_in_scaffold[:-1]:
